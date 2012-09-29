@@ -1,1 +1,1 @@
-Package "Package" [Function "f" []]
+Package "Package" [Function "f" [] []]

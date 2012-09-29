@@ -32,19 +32,21 @@ p_pkg = do
 p_function :: CharParser st AST
 p_function = do
   ws
-  void $ string "function"
+  str "function"
   ws
   name <- p_name
   ws
   params <- many p_param
-  void $ string "algorithm"
+  str "algorithm"
   ws
-  void $ string "end"
+  stmts <- many (try p_stmt)
+  ws
+  str "end"
   ws
   void $ p_name
   semi
   ws
-  return $ Function name params
+  return $ Function name params stmts
 
 p_param :: CharParser st Param
 p_param = ws *> (p_param_input <|> p_param_output) <* ws
@@ -71,6 +73,19 @@ p_param_output = do
   semi
   return $ Output t n
 
+p_stmt :: CharParser st Stmt
+p_stmt =
+  p_assign <* semi
+
+p_assign :: CharParser st Stmt
+p_assign = do
+  l <- p_name
+  ws
+  str ":="
+  ws
+  r <- p_name
+  return $ Assign l r
+
 p_type :: CharParser st Type
 p_type = do
    u <- upper
@@ -88,3 +103,6 @@ ws = void $ many (oneOf " \t\n")
 
 semi :: CharParser st ()
 semi = void $ char ';'
+
+str :: String -> CharParser st ()
+str = void . string
