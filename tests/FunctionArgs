@@ -1,0 +1,1 @@
+Package "Package" [Function "f" [Input "Integer" "x",Input "Integer" "y",Output "Boolean" "b1",Output "Boolean" "b2"]]

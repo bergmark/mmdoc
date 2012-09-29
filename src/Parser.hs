@@ -1,6 +1,6 @@
 module Parser where
 
-import           Control.Applicative           hiding (many)
+import           Control.Applicative           hiding (many, (<|>))
 import           Control.Monad
 import           Text.ParserCombinators.Parsec
 
@@ -36,16 +36,51 @@ p_function = do
   ws
   name <- p_name
   ws
+  params <- many p_param
+  ws
   void $ string "end"
   ws
   void $ p_name
   semi
   ws
-  return $ Function name
+  return $ Function name params
 
+p_param :: CharParser st Param
+p_param = ws *> (p_param_input <|> p_param_output) <* ws
+
+p_param_input :: CharParser st Param
+p_param_input = do
+  void $ string "input"
+  ws
+  t <- p_type
+  ws
+  n <- p_name
+  ws
+  semi
+  return $ Input t n
+
+p_param_output :: CharParser st Param
+p_param_output = do
+  void $ string "output"
+  ws
+  t <- p_type
+  ws
+  n <- p_name
+  ws
+  semi
+  return $ Output t n
+
+p_type :: CharParser st Type
+p_type = do
+   u <- upper
+   s <- many1 letter
+   return $ u : s
 
 p_name :: CharParser st Name
-p_name = many1 letter
+p_name = do
+  l <- letter
+  r <- many (letter <|> digit)
+  return $ l : r
 
 ws :: CharParser st ()
 ws = void $ many (oneOf " \t\n")

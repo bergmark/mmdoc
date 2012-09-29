@@ -1,8 +1,12 @@
 module Types where
 
-type Name = String
-
 data AST = Package Name [AST]
-         | Function Name
+         | Function Name [Param]
          deriving Show
 
+data Param = Input Type Name
+           | Output Type Name
+             deriving Show
+
+type Name = String
+type Type = String
