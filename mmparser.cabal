@@ -1,0 +1,34 @@
+name:                mmparser
+version:             0.1.0.0
+synopsis:            A parser for a subset of MetaModelica
+-- description:
+homepage:            http://www.github.com/bergmark/mmparser
+license:             BSD3
+license-file:        LICENSE
+author:              Adam Bergmark
+maintainer:          adam@edea.se
+-- copyright:
+category:            Language
+build-type:          Simple
+cabal-version:       >=1.8
+
+executable main
+  hs-source-dirs:    src
+  ghc-options:       -Wall
+  main-is:           Main.hs
+  build-depends:     base >= 4 && < 5,
+                     parsec,
+                     directory,
+                     filepath
+
+executable test
+  hs-source-dirs:    src
+  ghc-options:       -Wall
+  main-is:           Test.hs
+  build-depends:     base >= 4 && < 5,
+                     parsec,
+                     directory,
+                     filepath,
+                     HUnit,
+                     test-framework-hunit,
+                     test-framework
