@@ -37,6 +37,7 @@ p_function = do
   name <- p_name
   ws
   params <- many p_param
+  void $ string "algorithm"
   ws
   void $ string "end"
   ws
