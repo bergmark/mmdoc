@@ -1,1 +1,1 @@
-Package "Package" [Function "f" [] [Assign "x" "y"]]
+Package "Package" [Function "f" [] [Assign "x" "y",Assign "aoeu123" "aoeu123"]]

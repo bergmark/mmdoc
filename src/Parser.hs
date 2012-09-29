@@ -74,8 +74,7 @@ p_param_output = do
   return $ Output t n
 
 p_stmt :: CharParser st Stmt
-p_stmt =
-  p_assign <* semi
+p_stmt = ws *> p_assign <* semi <* ws
 
 p_assign :: CharParser st Stmt
 p_assign = do
