@@ -25,7 +25,7 @@ p_union = do
   ws1
   t <- p_type
   ws1
-  rs <- many p_record
+  rs <- many (ws *> p_record <* ws)
   ws
   str "end"
   ws1
@@ -38,13 +38,24 @@ p_record = do
   str "record"
   ws1
   n <- p_name
-  ws1
+  ws
+  decls <- many (p_vardecl <* ws)
+  ws
   str "end"
   ws1
   void $ p_name
   ws
   semi
-  return $ Record n []
+  return $ Record n decls
+
+p_vardecl :: CharParser st VarDecl
+p_vardecl = do
+  t <- p_type
+  ws1
+  v <- p_name
+  ws
+  semi
+  return (t,v)
 
 p_package :: CharParser st AST
 p_package = do
