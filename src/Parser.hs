@@ -1,19 +1,114 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE FunctionalDependencies     #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
 
 module Parser where
 
 import           Control.Applicative
-import           Control.Arrow
-import           Prelude             hiding (exp)
+-- import           Control.Arrow
+import           Control.Monad.Error
+import           Control.Monad.Identity (Identity)
+import           Control.Monad.State
+import           Prelude                hiding (exp)
 
-import           Tokenizer           (Token)
-import qualified Tokenizer           as T
+import           Tokenizer              (Token)
+import qualified Tokenizer              as T
 import           Types
 
-type TokenParser b = [Token] -> (b, [Token])
+data ParseState = ParseState { parseAsts :: [AST], parseTokens :: [Token] }
 
-parseFile :: T.Program -> [AST]
-parseFile (T.Program ts) = fst $ p_top ([],ts)
+parseState :: [Token] -> ParseState
+parseState ts = ParseState [] ts
+
+
+-- | Compile monad.
+newtype Parse a = Parse { unCompile :: StateT ParseState (ErrorT ParseError IO) a }
+  deriving ( MonadState ParseState
+           , MonadError ParseError
+           , MonadIO
+           , Monad
+           , Functor
+           , Applicative)
+
+data ParseError = ParseError
+                | ExpectedEnd
+                | ExpectedWord
+                | UnsupportedAstToken Token
+                | MissingEOF
+  deriving (Show)
+instance Error ParseError
+
+-- | The JavaScript FFI interfacing monad.
+newtype Fay a = Fay (Identity a)
+  deriving Monad
+
+onEither :: (a -> a') -> (b -> b') -> Either a b -> Either a' b'
+onEither lf _ (Left l) = Left $ lf l
+onEither _ rf (Right r) = Right $ rf r
+
+parse :: T.Program -> IO (Either ParseError [AST])
+parse (T.Program ts) = do
+  r :: Either ParseError ((), ParseState) <- runParse (parseState ts :: ParseState) parseTop
+  return $ onEither id (parseAsts . snd) r
+
+runParse :: ParseState -> Parse () -> IO (Either ParseError ((),ParseState))
+runParse st m = runErrorT (runStateT (unCompile m) st)
+
+look :: Parse (Maybe Token)
+look = do
+  s <- gets parseTokens
+  case s of
+    [T.EOF] -> return Nothing
+    (t:ts) -> modify (\s -> s { parseTokens = ts }) >> return (Just t)
+    _ -> throwError MissingEOF
+
+parseTop :: Parse ()
+parseTop = do
+  s <- look
+  case s of
+    Nothing -> return ()
+    Just _ -> p_top >> return ()
+
+p_top :: Parse [AST]
+p_top = do
+  s <- look
+  case s of
+    Just _ -> p_ast >> p_top
+    Nothing -> return []
+
+p_ast :: Parse (Maybe AST)
+p_ast = do
+  s <- look
+  case s of
+    Just T.Package -> do
+      name <- p_name
+      content <- p_top
+      p_end
+      void p_name
+      return . Just $ Package name content
+    Just t -> throwError $ UnsupportedAstToken t
+    Nothing -> return Nothing
+
+p_name :: Parse Name
+p_name = p_word
+
+p_end :: Parse ()
+p_end = do
+  s <- look
+  case s of
+    Just T.End -> return ()
+    _ -> throwError ExpectedEnd
+
+p_word :: Parse String
+p_word = do
+  s <- look
+  case s of
+    Just (T.W s) -> return s
+    _ -> throwError ExpectedWord
+
+{-
 
 p_top :: ([AST], [Token]) -> ([AST], [Token])
 p_top t@(_,[]) = t
@@ -243,4 +338,5 @@ p_name = do
   l <- letter
   r <- many (letter <|> digit)
   return $ l : r
+-}
 -}

@@ -49,7 +49,11 @@ parserTests = do
         tokens <- T.parseFile <$> readFile file
         feither tokens
           (const $ assertBool ("Could not tokenize " ++ name) False)
-          (assertEqual name (fromJust expected) . P.parseFile)
+          (\ts -> do
+            r <- P.parse ts
+            case r of
+              Left err -> error . show $ err
+              Right res -> assertEqual name (fromJust expected) res)
   where dotMo = isSuffixOf ".mo"
 
 main :: IO ()

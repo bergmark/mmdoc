@@ -18,13 +18,14 @@ data Token = Semi -- ;
            | Record
            | Union
            | W String
+           | EOF
              deriving (Eq, Show)
 
 parseFile :: String -> Either ParseError Program
 parseFile = parse p_top "(unknown)"
 
 p_top :: CharParser st Program
-p_top = Program <$> many (ws *> p_token <* ws) <* eof
+p_top = Program . (++ [EOF]) <$> many (ws *> p_token <* ws) <* eof
 
 p_token :: CharParser st Token
 p_token = semi'
