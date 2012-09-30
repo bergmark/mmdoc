@@ -119,26 +119,18 @@ p_ast _ = throwErr $ UnsupportedAstToken
 p_name :: Parse Name
 p_name = p_word
 
-tok :: PError -> Token -> Parse Token
-tok err tok = do
+tok :: PError -> (Token -> Bool) -> Parse Token
+tok err tokP = do
   s <- look
   case s of
-    Just t | t == tok -> eat >> return t
+    Just t | tokP t -> eat >> return t
     _ -> throwErr err
 
 p_end :: Parse ()
-p_end = void $ tok ExpectedEnd T.End
---  s <- look
---  case s of
---    Just T.End -> skip
---    _ -> throwErr ExpectedEnd
+p_end = void $ tok ExpectedEnd T.isEnd
 
 p_word :: Parse String
-p_word = do
-  s <- look
-  case s of
-    Just (T.W s) -> skip >> return s
-    _ -> throwErr ExpectedWord
+p_word = T.fromW <$> tok ExpectedWord T.isW
 
 p_semi :: Parse ()
 p_semi = do

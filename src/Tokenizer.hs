@@ -21,6 +21,13 @@ data Token = Semi -- ;
            | EOF
              deriving (Eq, Show)
 
+isEnd End = True
+isEnd _ = False
+isW (W _) = True
+isW _ = False
+fromW (W s) = s
+fromW _ = error "fromW"
+
 parseFile :: String -> Either ParseError Program
 parseFile = parse p_top "(unknown)"
 
