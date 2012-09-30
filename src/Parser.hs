@@ -92,11 +92,8 @@ pr :: (MonadIO m, Show a) => a -> m ()
 pr s = liftIO $ print s
 
 parseTop :: Parse ()
-parseTop = do
-  s <- look
-  case s of
-    Nothing -> return ()
-    Just t -> p_top >>= mapM_ addAst
+parseTop =
+  look >>= maybe (return ()) (const $ p_top >>= mapM_ addAst)
 
 p_top :: Parse [AST]
 p_top = look >>= aux
@@ -107,8 +104,7 @@ p_top = look >>= aux
       ast <- p_ast s
       asts <- p_top
       return $ ast : asts
-    aux (Just _) = return []
-    aux Nothing = return []
+    aux _ = return []
 
 p_ast :: Token -> Parse AST
 p_ast T.Package = do
@@ -123,12 +119,19 @@ p_ast _ = throwErr $ UnsupportedAstToken
 p_name :: Parse Name
 p_name = p_word
 
-p_end :: Parse ()
-p_end = do
+tok :: PError -> Token -> Parse Token
+tok err tok = do
   s <- look
   case s of
-    Just T.End -> skip
-    _ -> throwErr ExpectedEnd
+    Just t | t == tok -> eat >> return t
+    _ -> throwErr err
+
+p_end :: Parse ()
+p_end = void $ tok ExpectedEnd T.End
+--  s <- look
+--  case s of
+--    Just T.End -> skip
+--    _ -> throwErr ExpectedEnd
 
 p_word :: Parse String
 p_word = do
