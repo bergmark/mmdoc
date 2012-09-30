@@ -1,6 +1,8 @@
 module Types where
 
-import           Prelude hiding (exp)
+import           Prelude   hiding (exp)
+
+import qualified Tokenizer as T
 
 data AST = Package Name [AST]
          | Function Name [Param] [Stmt]
@@ -8,6 +10,14 @@ data AST = Package Name [AST]
          | MComment String -- /* */
          | Union Name [Record]
          deriving (Eq, Show)
+
+isAstStart :: T.Token -> Bool
+isAstStart T.Package = True
+isAstStart (T.Comment _) = True
+isAstStart T.Function = True
+isAstStart (T.MComment _) = True
+isAstStart T.Union = True
+isAstStart _ = False
 
 data Param = Input VarDecl
            | Output VarDecl

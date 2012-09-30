@@ -37,8 +37,16 @@ data ParseError = ParseError PError ParseState
                   deriving Show
 
 data PError = ExpectedEnd
+            | ExpectedInputOutput
+            | ExpectedStmt
+            | ExpectedAssign
+            | ExpectedThen
+            | ExpectedInput
             | ExpectedSemi
+            | ExpectedAlgorithm
             | ExpectedWord
+            | ExpectedMatch
+            | ExpectedCase
             | UnsupportedAstToken
             | MissingEOF
   deriving (Show)
@@ -59,7 +67,6 @@ runParse st m = runErrorT (runStateT (unCompile m) st)
 
 addAst :: AST -> Parse ()
 addAst ast = do
-  pr ("add", ast)
   modify $ \s -> s { parseAsts = ast : parseAsts s }
 
 pu :: MonadIO m => String -> m ()
@@ -72,112 +79,62 @@ parseTop =
   look >>= maybe (return ()) (const $ p_top >>= mapM_ addAst . reverse)
 
 p_top :: Parse [AST]
-p_top = look >>= aux
-  where
-    aux :: Maybe Token -> Parse [AST]
-    aux (Just T.Package) = f
-    aux (Just (T.Comment _)) = f
-    aux _ = return []
-    f = do
-      s <- eat
-      ast <- p_ast s
-      asts <- p_top
-      return $ ast : asts
+p_top = look >>= aux where
+  aux :: Maybe Token -> Parse [AST]
+  aux (Just t) | isAstStart t = do
+    s <- eat
+    ast <- p_ast s
+    asts <- p_top
+    return $ ast : asts
+  aux _ = return []
 
 p_ast :: Token -> Parse AST
 p_ast T.Package = do
   name <- p_name
   content <- p_top
-  p_end
+  t_end
   void p_name
-  void p_semi
+  void t_semi
   return $ Package name content
+p_ast T.Function = do
+  name <- p_name
+  params <- p_params
+  p_algorithm
+  stmts <- p_stmts
+  t_end
+  void p_name
+  return $ Function name params stmts
 p_ast (T.Comment s) = return $ Comment s
 p_ast _ = throwErr $ UnsupportedAstToken
 
-p_name :: Parse Name
-p_name = p_word
+p_algorithm :: Parse ()
+p_algorithm = void $ tok ExpectedAlgorithm (== T.Algorithm)
 
-p_end :: Parse ()
-p_end = void $ tok ExpectedEnd T.isEnd
+p_params :: Parse [Param]
+p_params =
+  look >>= \s -> case s of
+    Just s | T.isInputOutput s -> eat >>= p_param >>= \p -> (p :) <$> p_params
+    _ -> return []
 
-p_word :: Parse String
-p_word = T.fromW <$> tok ExpectedWord T.isW
+p_param :: Token -> Parse Param
+p_param T.Input = Input <$> (eat >>= p_vardecl)
+p_param T.Output = Output <$> (eat >>= p_vardecl)
+p_param _ = throwErr ExpectedInputOutput
 
-p_semi :: Parse ()
-p_semi = void $ tok ExpectedSemi T.isSemi
+p_stmts :: Parse [Stmt]
+p_stmts =
+  look >>= \s -> case s of
+    Just s | (s /= T.Semi) -> eat >>= p_stmt >>= (\stmt -> (stmt :) <$> p_stmts)
+    _ -> return []
+
+p_stmt :: Token -> Parse Stmt
+p_stmt (T.W lhs) =
+  eat >>= \s -> case s of
+    T.W ":=" -> eat >>= \t -> p_exp t >>= \exp -> return (Assign lhs exp)
+    _ -> throwErr ExpectedAssign
+p_stmt _ = throwErr ExpectedStmt
 
 {-
-
-p_ast :: [Token] -> ([AST], [Token])
-p_ast [] = ([],[])
-p_ast (T.Package : T.W name : xs) = case p_ast xs of
-  (content, T.End : T.W _name : T.Semi : rest) -> ([Package name content], rest)
-  _ -> err "p_ast#0" xs
-p_ast (T.Comment s : ts) = ([Comment s], ts)
-p_ast (T.MComment s : ts) = ([MComment s], ts)
-p_ast (T.Function : T.W name : xs) = case p_fun_vardecls xs of
-  (params :: [Param], T.Algorithm : xs') -> case p_stmts xs' of
-    (stmts :: [Stmt], T.End : T.W _name : T.Semi : rest) -> ([Function name params stmts], rest)
-    _ -> err "p_ast#2" xs'
-  _ -> err "p_ast#1" xs
-p_ast (T.Union : T.W name : ts) = case p_records ts of
-  (recs, T.End : T.W _name : T.Semi : ts') -> ([Union name recs], ts')
-  (_, ts'') -> err "p_ast#4" ts''
-p_ast ts@(T.End : _) = ([], ts)
-p_ast ts = err "p_ast#3" ts
-
-err :: (Show s) => String -> s -> a
-err s xs = error $ s ++ " tail not handled " ++ show xs ++ "\n"
-
-p_records :: TokenParser [Record]
-p_records (T.Record : T.W name : ts) = case p_vardecls ts of
-  (vardecls, T.End : T.W _name : T.Semi : ts') -> first (Record name vardecls :) $ p_records ts'
-  _ -> err "p_records" ts
-p_records ts = ([], ts)
-
-p_vardecls :: [Token] -> ([VarDecl], [Token])
-p_vardecls ts = case p_vardecl ts of
-  (Nothing, ts') -> ([], ts')
-  (Just p,  ts') -> first (p :) $ p_vardecls ts'
-
-
-p_fun_vardecls :: [Token] -> ([Param], [Token])
-p_fun_vardecls ts = case p_fun_vardecl ts of
-  (Nothing, ts') -> ([], ts')
-  (Just p,  ts') -> first (p :) $ p_fun_vardecls ts'
-
-p_fun_vardecl :: [Token] -> (Maybe Param, [Token])
-p_fun_vardecl (T.W "input"  : ts) = first (Input <$>) $ p_vardecl ts
-p_fun_vardecl (T.W "output" : ts) = first (Output <$>) $ p_vardecl ts
-p_fun_vardecl ts = (Nothing, ts)
-
-p_vardecl :: TokenParser (Maybe VarDecl)
-p_vardecl (T.W typ : T.W var : T.Semi : xs) = (Just $ (typ, var), xs)
-p_vardecl xs = (Nothing, xs)
-
-p_stmts :: TokenParser [Stmt]
-p_stmts ts = case p_stmt ts of
-  (Nothing, ts') -> ([], ts')
-  (Just s, ts') -> first (s :) $ p_stmts ts'
-
-p_stmt :: [Token] -> (Maybe Stmt, [Token])
-p_stmt (T.W lhs : T.W ":=" : xs) = case p_exp xs of
-  (e, T.Semi : ts) -> (Just $ Assign lhs e, ts)
-  _ -> err "p_stmt" xs
-p_stmt ts = (Nothing, ts)
-
-p_exp :: TokenParser Exp
-p_exp ts@(T.W "match" : _) = p_match ts
-p_exp (T.W var : ts) = (EVar var, ts)
-p_exp ts = err "p_exp" ts
-
-p_match :: TokenParser Exp
-p_match (T.W "match" : T.W var : ts) = case p_match_cases ts of
-   (cases, T.End : T.W "match" : ts') -> (Match [var] cases, ts')
-   _ -> err "p_match#1" ts
-p_match ts = err "p_match#2" ts
-
 p_match_cases :: TokenParser [Case]
 p_match_cases ts = case p_match_case ts of
   (Nothing, ts') -> ([], ts')
@@ -194,6 +151,71 @@ p_match_case ts = (Nothing, ts)
 p_pat :: TokenParser Pat
 p_pat (T.W v : ts) = (v, ts)
 p_pat ts = err "p_pat" ts
+-}
+
+p_exp :: Token -> Parse Exp
+p_exp T.Match = do
+  mvar <- p_name
+  cases <- p_match_cases
+  t_end
+  void $ tok ExpectedMatch (== T.Match)
+  t_semi
+  return $ Match [mvar] cases
+p_exp (T.W v) = do
+  t_semi
+  return $ EVar v
+p_exp _ = throwErr ExpectedMatch
+
+p_match_cases :: Parse [Case]
+p_match_cases =
+  look >>= \s -> case s of
+    Just T.Case -> p_match_case >>= \c -> (c :) <$> p_match_cases
+    Just _ -> return []
+
+p_match_case :: Parse Case
+p_match_case = do
+  void $ tok ExpectedCase (== T.Case)
+  pat <- p_pat
+  void $ tok ExpectedThen (== T.Then)
+  exp <- eat >>= p_exp
+  t_semi
+  return (pat, exp)
+
+p_pat :: Parse Pat
+p_pat = t_word
+
+p_vardecl :: Token -> Parse VarDecl
+p_vardecl = undefined
+
+p_name :: Parse Name
+p_name = t_word
+
+t_end :: Parse ()
+t_end = void $ tok ExpectedEnd (== T.End)
+
+t_word :: Parse String
+t_word = T.fromW <$> tok ExpectedWord T.isW
+
+t_semi :: Parse ()
+t_semi = void $ tok ExpectedSemi (== T.Semi)
+
+{-
+
+p_ast (T.Union : T.W name : ts) = case p_records ts of
+  (recs, T.End : T.W _name : T.Semi : ts') -> ([Union name recs], ts')
+  (_, ts'') -> err "p_ast#4" ts''
+
+p_records :: TokenParser [Record]
+p_records (T.Record : T.W name : ts) = case p_vardecls ts of
+  (vardecls, T.End : T.W _name : T.Semi : ts') -> first (Record name vardecls :) $ p_records ts'
+  _ -> err "p_records" ts
+p_records ts = ([], ts)
+
+p_vardecls :: [Token] -> ([VarDecl], [Token])
+p_vardecls ts = case p_vardecl ts of
+  (Nothing, ts') -> ([], ts')
+  (Just p,  ts') -> first (p :) $ p_vardecls ts'
+
 
 {-
 

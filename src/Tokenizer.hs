@@ -20,17 +20,19 @@ data Token = Semi -- ;
            | Record
            | Union
            | W String
+           | Input
+           | Output
+           | Match
+           | Case
+           | Then
            | EOF
              deriving (Eq, Show)
 
-isEnd End = True
-isEnd _ = False
 isW (W _) = True
 isW _ = False
 fromW (W s) = s
 fromW _ = error "fromW"
-isSemi Semi = True
-isSemi _ = False
+isInputOutput p = Input == p || Output == p
 
 parseFile :: String -> Either ParseError Program
 parseFile = parse p_top "(unknown)"
@@ -43,8 +45,13 @@ p_token = semi'
             <|> try algorithm
             <|> try comment
             <|> try end
+            <|> try input
+            <|> try output
+            <|> try match
             <|> try function
             <|> try mcomment
+            <|> try _case
+            <|> try _then
             <|> try package
             <|> try record
             <|> try union
@@ -53,10 +60,15 @@ p_token = semi'
     algorithm = str "algorithm" *> return Algorithm
     comment   = Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n"))
     end       = str "end"       *> return End
+    input     = str "input"     *> return Input
+    output    = str "output"    *> return Output
+    match     = str "match"     *> return Match
     function  = str "function"  *> return Function
     mcomment  = fmap MComment $ str "/*" *> manyTill (noneOf "_") (try (string "*/"))
     package   = str "package"   *> return Package
     record    = str "record"    *> return Record
+    _case     = str "case"      *> return Case
+    _then     = str "then"      *> return Then
     semi'     = semi *> return Semi
     union     = str "uniontype" *> return Union
     word      = W <$> many1 (noneOf " \t\n\r;")
