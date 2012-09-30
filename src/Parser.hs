@@ -50,11 +50,6 @@ data PError = ExpectedAlgorithm
   deriving (Show)
 instance Error ParseError
 
-throwErr :: PError -> Parse a
-throwErr perr = do
-  s <- gets id
-  throwError $ ParseError perr s
-
 parse :: T.Program -> IO (Either ParseError [AST])
 parse (T.Program ts) = do
   r :: Either ParseError ((), ParseState) <- runParse (parseState ts :: ParseState) parseTop
@@ -184,6 +179,11 @@ t_algorithm :: Parse ()
 t_algorithm = void $ tok ExpectedAlgorithm (== T.Algorithm)
 
 -- General parsing
+
+throwErr :: PError -> Parse a
+throwErr perr = do
+  s <- gets id
+  throwError $ ParseError perr s
 
 look :: Parse (Maybe Token)
 look = do
