@@ -34,6 +34,7 @@ newtype Parse a = Parse { unCompile :: StateT ParseState (ErrorT ParseError IO) 
 
 data ParseError = ParseError
                 | ExpectedEnd
+                | ExpectedSemi
                 | ExpectedWord
                 | UnsupportedAstToken Token
                 | MissingEOF
@@ -87,6 +88,7 @@ p_ast = do
       content <- p_top
       p_end
       void p_name
+      void p_semi
       return . Just $ Package name content
     Just t -> throwError $ UnsupportedAstToken t
     Nothing -> return Nothing
@@ -107,6 +109,13 @@ p_word = do
   case s of
     Just (T.W s) -> return s
     _ -> throwError ExpectedWord
+
+p_semi :: Parse ()
+p_semi = do
+  s <- look
+  case s of
+    Just T.Semi -> return ()
+    _ -> throwError ExpectedSemi
 
 {-
 
