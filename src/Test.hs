@@ -51,8 +51,8 @@ parserTests = do
         tokens <- T.parseFile <$> readFile file
         feither tokens
           (const $ assertBool ("Could not tokenize " ++ name) False)
-          (\ts -> do
-            r <- P.parse ts
+          (\toks -> do
+            r <- P.parse toks
             case r of
               Left (P.ParseError perr (P.ParseState { P.parseTokens = ts })) -> error . show $ (perr, take 3 ts)
               Right res -> assertEqual name (fromJust expected) res)
@@ -62,5 +62,5 @@ main :: IO ()
 main = do
   tokenizer <- tokenizerTests
   parser <- parserTests
-  defaultMain [{-tokenizer,-} parser]
+  defaultMain [tokenizer, parser]
 

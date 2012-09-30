@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable         #-}
-{-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
@@ -10,7 +8,7 @@ import           Control.Applicative hiding (many)
 import           Control.Monad
 import           Control.Monad.Error
 import           Control.Monad.State
-import           Prelude             hiding (exp)
+import           Prelude             hiding (exp, pred)
 
 import           Tokenizer           (Token)
 import qualified Tokenizer           as T
@@ -69,11 +67,6 @@ addAst :: AST -> Parse ()
 addAst ast = do
   modify $ \s -> s { parseAsts = ast : parseAsts s }
 
-pu :: MonadIO m => String -> m ()
-pu s = liftIO $ putStrLn s
-pr :: (MonadIO m, Show a) => a -> m ()
-pr s = liftIO $ print s
-
 parseTop :: Parse ()
 parseTop =
   look >>= maybe (return ()) (const $ p_top >>= mapM_ addAst . reverse)
@@ -100,9 +93,9 @@ p_ast T.Package = do
   return $ Package name content
 p_ast T.Function = do
   name <- p_name
-  params <- p_params
+  params <- many T.isInputOutput p_param
   t_algorithm
-  stmts <- p_stmts
+  stmts <- many (/= T.End) p_stmt
   t_end
   void p_name
   t_semi
@@ -125,26 +118,17 @@ p_records =
 p_record :: Token -> Parse Record
 p_record T.Record = do
   name <- p_name
-  vardecls <- p_vardecls
+  vardecls <- many T.isW p_vardecl
   t_end
   void $ p_name
   t_semi
   return $ Record name vardecls
 p_record _ = throwErr ExpectedRecord
 
-p_params :: Parse [Param]
-p_params =
-  look >>= \s -> case s of
-    Just s | T.isInputOutput s -> eat >>= p_param >>= \p -> (p :) <$> p_params
-    _ -> return []
-
 p_param :: Token -> Parse Param
 p_param T.Input = Input <$> (eat >>= p_vardecl)
 p_param T.Output = Output <$> (eat >>= p_vardecl)
 p_param _ = throwErr ExpectedInputOutput
-
-p_stmts :: Parse [Stmt]
-p_stmts = many (/= T.End) p_stmt
 
 p_stmt :: Token -> Parse Stmt
 p_stmt (T.W lhs) =
@@ -157,38 +141,15 @@ p_stmt (T.W lhs) =
     _ -> throwErr ExpectedAssign
 p_stmt _ = throwErr ExpectedStmt
 
-{-
-p_match_cases :: TokenParser [Case]
-p_match_cases ts = case p_match_case ts of
-  (Nothing, ts') -> ([], ts')
-  (Just cse, ts') -> first (cse :) $ p_match_cases ts'
-
-p_match_case :: TokenParser (Maybe Case)
-p_match_case (T.W "case" : ts) = case p_pat ts of
-  (pat, T.W "then" : ts') -> case p_exp ts' of
-    (exp, T.Semi : ts'') -> (Just (pat,exp), ts'')
-    _ -> err "p_match_case #1" ts'
-  _ -> err "p_match_case #2" ts
-p_match_case ts = (Nothing, ts)
-
-p_pat :: TokenParser Pat
-p_pat (T.W v : ts) = (v, ts)
-p_pat ts = err "p_pat" ts
--}
-
 p_exp :: Token -> Parse Exp
 p_exp T.Match = do
   mvar <- p_name
-  cases <- p_match_cases
+  cases <- many (== T.Case) p_match_case
   t_end
   t_match
   return $ Match [mvar] cases
-p_exp (T.W v) = do
-  return $ EVar v
+p_exp (T.W v) = return $ EVar v
 p_exp _ = throwErr ExpectedMatch
-
-p_match_cases :: Parse [Case]
-p_match_cases = many (== T.Case) p_match_case
 
 p_match_case :: Token -> Parse Case
 p_match_case T.Case = do
@@ -201,9 +162,6 @@ p_match_case _ = throwErr ExpectedCase
 
 p_pat :: Parse Pat
 p_pat = t_word
-
-p_vardecls :: Parse [VarDecl]
-p_vardecls = many T.isW p_vardecl
 
 p_vardecl :: Token -> Parse VarDecl
 p_vardecl (T.W typ) = do
@@ -261,7 +219,7 @@ tok err tokP = do
 many :: (Token -> Bool) -> (Token -> Parse a) -> Parse [a]
 many pred p =
   look >>= \s -> case s of
-    Just s | pred s -> eat >>= p >>= (\res -> (res :) <$> many pred p)
+    Just v | pred v -> eat >>= p >>= (\res -> (res :) <$> many pred p)
     _ -> return []
 
 -- Misc
@@ -269,3 +227,9 @@ many pred p =
 onEither :: (a -> a') -> (b -> b') -> Either a b -> Either a' b'
 onEither lf _ (Left l) = Left $ lf l
 onEither _ rf (Right r) = Right $ rf r
+
+pu :: MonadIO m => String -> m ()
+pu s = liftIO $ putStrLn s
+
+pr :: (MonadIO m, Show a) => a -> m ()
+pr s = liftIO $ print s
