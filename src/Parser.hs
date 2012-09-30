@@ -100,7 +100,6 @@ p_ast T.Package = do
   t_semi
   return $ Package name content
 p_ast T.Function = do
-  pr "function"
   name <- p_name
   params <- p_params
   t_algorithm
@@ -110,7 +109,6 @@ p_ast T.Function = do
   t_semi
   return $ Function name params stmts
 p_ast T.Union = do
-  pr "uniontype"
   name <- p_name
   recs <- p_records
   t_end
@@ -134,9 +132,6 @@ p_record T.Record = do
   t_semi
   return $ Record name vardecls
 p_record _ = throwErr ExpectedRecord
-
-t_algorithm :: Parse ()
-t_algorithm = void $ tok ExpectedAlgorithm (== T.Algorithm)
 
 p_params :: Parse [Param]
 p_params =
@@ -196,9 +191,6 @@ p_exp (T.W v) = do
   return $ EVar v
 p_exp _ = throwErr ExpectedMatch
 
-t_match :: Parse ()
-t_match = void $ tok ExpectedMatch (== T.Match)
-
 p_match_cases :: Parse [Case]
 p_match_cases =
   look >>= \s -> case s of
@@ -233,6 +225,11 @@ p_vardecl _ = throwErr ExpectedWord
 p_name :: Parse Name
 p_name = t_word
 
+-- Tokens
+
+t_match :: Parse ()
+t_match = void $ tok ExpectedMatch (== T.Match)
+
 t_end :: Parse ()
 t_end = void $ tok ExpectedEnd (== T.End)
 
@@ -242,164 +239,8 @@ t_word = T.fromW <$> tok ExpectedWord T.isW
 t_semi :: Parse ()
 t_semi = void $ tok ExpectedSemi (== T.Semi)
 
-{-
-
-p_ast (T.Union : T.W name : ts) = case p_records ts of
-  (recs, T.End : T.W _name : T.Semi : ts') -> ([Union name recs], ts')
-  (_, ts'') -> err "p_ast#4" ts''
-
-p_records :: TokenParser [Record]
-p_records (T.Record : T.W name : ts) = case p_vardecls ts of
-  (vardecls, T.End : T.W _name : T.Semi : ts') -> first (Record name vardecls :) $ p_records ts'
-  _ -> err "p_records" ts
-p_records ts = ([], ts)
-
-p_vardecls :: [Token] -> ([VarDecl], [Token])
-p_vardecls ts = case p_vardecl ts of
-  (Nothing, ts') -> ([], ts')
-  (Just p,  ts') -> first (p :) $ p_vardecls ts'
-
-
-{-
-
-p_exp :: CharParser st Exp
-p_exp = try p_match <|> p_evar
-
-p_match :: CharParser st Exp
-p_match = do
-  str "match"
-  ws1
-  v <- p_name -- TODO handle match (a,..)
-  ws1
-  cs <- many p_match_case
-  ws1
-  str "end"
-  ws1
-  str "match"
-  return $ Match [v] cs
-
-p_match_case :: CharParser st Case
-p_match_case = do
-  str "case"
-  ws
-  pat <- p_pat
-  ws
-  str "then"
-  ws
-  exp <- p_exp
-  ws
-  semi
-  return (pat, exp)
-
-p_pat :: CharParser st Pat
-p_pat = PVar <$> p_name
-
-p_evar :: CharParser st Exp
-p_evar = EVar <$> p_name
-
-
-
-p_union :: CharParser st AST
-p_union = do
-  str "uniontype"
-  ws1
-  t <- p_type
-  ws1
-  rs <- many (ws *> p_record <* ws)
-  ws
-  str "end"
-  ws1
-  void $ p_type
-  semi
-  return $ Union t rs
-
-p_record :: CharParser st Record
-p_record = do
-  str "record"
-  ws1
-  n <- p_name
-  ws
-  decls <- many (p_vardecl <* ws)
-  ws
-  str "end"
-  ws1
-  void $ p_name
-  ws
-  semi
-  return $ Record n decls
-
-p_vardecl :: CharParser st VarDecl
-p_vardecl = do
-  t <- p_type
-  ws1
-  v <- p_name
-  ws
-  semi
-  return (t,v)
-
-p_package :: CharParser st AST
-p_package = do
-  str "package"
-  ws
-  name <- p_name
-  ws
-  fs <- p_top'
-  ws
-  void $ string "end"
-  ws
-  void $ p_name
-  semi
-  return $ Package name fs
-
-p_function :: CharParser st AST
-p_function = do
-  ws
-  str "function"
-  ws
-  name <- p_name
-  ws
-  params <- many p_param
-  str "algorithm"
-  ws
-  stmts <- many (try p_stmt)
-  ws
-  str "end"
-  ws
-  void $ p_name
-  semi
-  ws
-  return $ Function name params stmts
-
-
-p_stmt :: CharParser st Stmt
-p_stmt = ws *> p_assign <* ws <* semi <* ws
-
-p_assign :: CharParser st Stmt
-p_assign = do
-  l <- p_lhs
-  ws
-  str ":="
-  ws
-  r <- p_exp
-  return $ Assign l r
-
-p_lhs :: CharParser st LHS
-p_lhs = LVar <$> p_name
-
-p_type :: CharParser st Type
-p_type = do
-   u <- upper
-   s <- many letter
-   return $ u : s
-
-
-p_name :: CharParser st Name
-p_name = do
-  l <- letter
-  r <- many (letter <|> digit)
-  return $ l : r
--}
--}
+t_algorithm :: Parse ()
+t_algorithm = void $ tok ExpectedAlgorithm (== T.Algorithm)
 
 -- General parsing
 
