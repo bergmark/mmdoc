@@ -27,6 +27,8 @@ isW (W _) = True
 isW _ = False
 fromW (W s) = s
 fromW _ = error "fromW"
+isSemi Semi = True
+isSemi _ = False
 
 parseFile :: String -> Either ParseError Program
 parseFile = parse p_top "(unknown)"

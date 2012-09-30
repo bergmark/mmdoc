@@ -133,11 +133,7 @@ p_word :: Parse String
 p_word = T.fromW <$> tok ExpectedWord T.isW
 
 p_semi :: Parse ()
-p_semi = do
-  s <- look
-  case s of
-    Just T.Semi -> skip
-    _ -> throwErr ExpectedSemi
+p_semi = void $ tok ExpectedSemi T.isSemi
 
 {-
 
