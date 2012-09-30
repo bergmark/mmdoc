@@ -10,11 +10,29 @@ import           Test.Framework
 import           Test.Framework.Providers.HUnit
 import           Test.HUnit                     (assertBool, assertEqual)
 
-import           Parser
-import           Types
+import qualified Parser                         as P
+import           ParserTest
+import qualified Tokenizer                      as T
+import           TokenTest
 
 dropSuffix :: FilePath -> FilePath
 dropSuffix = reverse . drop 1 . dropWhile (/= '.') . reverse
+
+tokenizerTests :: IO Test
+tokenizerTests = do
+  files <- fmap (map ("tests" </>) . sort . filter dotMo) $ getDirectoryContents "tests"
+  return $ testGroup "Tokenizer" $ flip map files $ \file ->
+    testCase file $ do
+      let name = (reverse . drop 1 . dropWhile (/= '.') . reverse . drop 1 . dropWhile (/= '/')) file
+      let expected = name `lookup` tokenExpected
+      when (isJust expected) $ do
+        result <- T.parseFile <$> readFile file
+        either
+          (assertEqual file (show $ fromJust expected) . show)
+          (assertEqual file (fromJust expected))
+          result
+  where dotMo = isSuffixOf ".mo"
+
 
 parserTests :: IO Test
 parserTests = do
@@ -22,10 +40,10 @@ parserTests = do
   return $ testGroup "Tests" $ flip map files $ \file ->
     testCase file $ do
       let name = (reverse . drop 1 . dropWhile (/= '.') . reverse . drop 1 . dropWhile (/= '/')) file
-      let expected = name `lookup` exps
-      assertBool (name ++ " is missing in exps") (isJust expected)
+      let expected = name `lookup` parserExpected
+      assertBool (name ++ " is missing in parserExpected") (isJust expected)
       when (isJust expected) $ do
-        result <- parseFile <$> readFile file
+        result <- P.parseFile <$> readFile file
         either
           (assertEqual file (show $ fromJust expected) . show)
           (assertEqual file (fromJust expected))
@@ -34,17 +52,7 @@ parserTests = do
 
 main :: IO ()
 main = do
-  compiler <- parserTests
-  defaultMain [compiler]
+  tokenizer <- tokenizerTests
+  parser <- parserTests
+  defaultMain [tokenizer, parser]
 
-exps :: [(String, [AST])]
-exps = [
-    "Package" `tup` [Package "Package" []]
-  , "Function" `tup` [Package "Package" [Function "f" [] []]]
-  , "FunctionArgs" `tup` [Package "Package" [Function "f" [Input "Integer" "x",Input "Integer" "y",Output "Boolean" "b1",Output "Boolean" "b2"] []]]
-  , "FunctionStatements" `tup` [Package "Package" [Function "f" [] [Assign (LVar "x") (EVar "y"),Assign (LVar "aoeu123") (EVar "aoeu123")]]]
-  , "Match" `tup` [Package "Package" [Function "f" [] [Assign (LVar "x") (Match ["y"] [(PVar "z",EVar "w")])]]]
-  , "Comment" `tup` [Comment " foo", Package "Package" [Comment " bar"]]
-  , "UnionType" `tup` [Package "P" [Union "U" []]]
-  , "UnionTypeRecord" `tup` [Union "U" [Record "R" [], Record "Tup" [("Integer","a"), ("String","b")]]]
-  ] where tup = (,)

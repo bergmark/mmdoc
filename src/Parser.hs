@@ -5,6 +5,7 @@ import           Control.Monad
 import           Prelude                       hiding (exp)
 import           Text.ParserCombinators.Parsec
 
+import           ParsecExtra
 import           Types
 
 parseFile :: String -> Either ParseError [AST]
@@ -176,15 +177,3 @@ p_name = do
   l <- letter
   r <- many (letter <|> digit)
   return $ l : r
-
-ws1 :: CharParser st ()
-ws1 = void $ many1 (oneOf " \t\r\n")
-
-ws :: CharParser st ()
-ws = void $ many (oneOf " \t\r\n")
-
-semi :: CharParser st ()
-semi = void $ char ';'
-
-str :: String -> CharParser st ()
-str = void . string
