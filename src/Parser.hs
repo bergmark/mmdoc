@@ -36,19 +36,19 @@ newtype Parse a = Parse { unCompile :: StateT ParseState (ErrorT ParseError IO) 
 data ParseError = ParseError PError ParseState
                   deriving Show
 
-data PError = ExpectedEnd
-            | ExpectedInputOutput
-            | ExpectedStmt
+data PError = ExpectedAlgorithm
+            | ExpectedEnd
             | ExpectedAssign
-            | ExpectedThen
-            | ExpectedInput
-            | ExpectedSemi
-            | ExpectedAlgorithm
-            | ExpectedWord
-            | ExpectedMatch
             | ExpectedCase
-            | UnsupportedAstToken
+            | ExpectedInput
+            | ExpectedInputOutput
+            | ExpectedMatch
+            | ExpectedSemi
+            | ExpectedStmt
+            | ExpectedThen
+            | ExpectedWord
             | MissingEOF
+            | UnsupportedAstToken
   deriving (Show)
 instance Error ParseError
 
@@ -89,6 +89,8 @@ p_top = look >>= aux where
   aux _ = return []
 
 p_ast :: Token -> Parse AST
+p_ast (T.Comment s) = return $ Comment s
+p_ast (T.MComment s) = return $ MComment s
 p_ast T.Package = do
   name <- p_name
   content <- p_top
@@ -106,9 +108,18 @@ p_ast T.Function = do
   void p_name
   t_semi
   return $ Function name params stmts
-p_ast (T.Comment s) = return $ Comment s
-p_ast (T.MComment s) = return $ MComment s
+p_ast T.Union = do
+  pr "uniontype"
+  name <- p_name
+  recs <- p_records
+  t_end
+  void $ p_name
+  t_semi
+  return $ Union name recs
 p_ast _ = throwErr $ UnsupportedAstToken
+
+p_records :: Parse [Record]
+p_records = undefined
 
 t_algorithm :: Parse ()
 t_algorithm = void $ tok ExpectedAlgorithm (== T.Algorithm)
@@ -193,7 +204,11 @@ p_pat :: Parse Pat
 p_pat = t_word
 
 p_vardecl :: Token -> Parse VarDecl
-p_vardecl = undefined
+p_vardecl (T.W typ) = do
+  var <- p_name
+  t_semi
+  return (typ, var)
+p_vardecl _ = throwErr ExpectedWord
 
 p_name :: Parse Name
 p_name = t_word
