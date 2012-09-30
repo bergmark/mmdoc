@@ -58,7 +58,7 @@ throwErr perr = do
 parse :: T.Program -> IO (Either ParseError [AST])
 parse (T.Program ts) = do
   r :: Either ParseError ((), ParseState) <- runParse (parseState ts :: ParseState) parseTop
-  return $ onEither id (parseAsts . snd) r
+  return $ either (Left . id) (Right. parseAsts . snd) r
 
 runParse :: ParseState -> Parse () -> IO (Either ParseError ((),ParseState))
 runParse st m = runErrorT (runStateT (unCompile m) st)
@@ -72,14 +72,7 @@ parseTop =
   look >>= maybe (return ()) (const $ p_top >>= mapM_ addAst . reverse)
 
 p_top :: Parse [AST]
-p_top = look >>= aux where
-  aux :: Maybe Token -> Parse [AST]
-  aux (Just t) | isAstStart t = do
-    s <- eat
-    ast <- p_ast s
-    asts <- p_top
-    return $ ast : asts
-  aux _ = return []
+p_top = many isAstStart p_ast
 
 p_ast :: Token -> Parse AST
 p_ast (T.Comment s) = return $ Comment s
@@ -223,10 +216,6 @@ many pred p =
     _ -> return []
 
 -- Misc
-
-onEither :: (a -> a') -> (b -> b') -> Either a b -> Either a' b'
-onEither lf _ (Left l) = Left $ lf l
-onEither _ rf (Right r) = Right $ rf r
 
 pu :: MonadIO m => String -> m ()
 pu s = liftIO $ putStrLn s
