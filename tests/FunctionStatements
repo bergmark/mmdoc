@@ -1,1 +1,1 @@
-Package "Package" [Function "f" [] [Assign "x" "y",Assign "aoeu123" "aoeu123"]]
+Package "Package" [Function "f" [] [Assign (LVar "x") (EVar "y"),Assign (LVar "aoeu123") (EVar "aoeu123")]]
