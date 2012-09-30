@@ -43,6 +43,7 @@ data PError = ExpectedAlgorithm
             | ExpectedInput
             | ExpectedInputOutput
             | ExpectedMatch
+            | ExpectedRecord
             | ExpectedSemi
             | ExpectedStmt
             | ExpectedThen
@@ -119,7 +120,20 @@ p_ast T.Union = do
 p_ast _ = throwErr $ UnsupportedAstToken
 
 p_records :: Parse [Record]
-p_records = undefined
+p_records =
+  look >>= \s -> case s of
+    Just T.Record -> eat >>= p_record >>= (\r -> (r :) <$> p_records)
+    _ -> return []
+
+p_record :: Token -> Parse Record
+p_record T.Record = do
+  name <- p_name
+  vardecls <- p_vardecls
+  t_end
+  void $ p_name
+  t_semi
+  return $ Record name vardecls
+p_record _ = throwErr ExpectedRecord
 
 t_algorithm :: Parse ()
 t_algorithm = void $ tok ExpectedAlgorithm (== T.Algorithm)
@@ -202,6 +216,12 @@ p_match_case = do
 
 p_pat :: Parse Pat
 p_pat = t_word
+
+p_vardecls :: Parse [VarDecl]
+p_vardecls =
+  look >>= \s -> case s of
+    Just (T.W _) -> eat >>= p_vardecl >>= \vd -> (vd :) <$> p_vardecls
+    Just _ -> return []
 
 p_vardecl :: Token -> Parse VarDecl
 p_vardecl (T.W typ) = do
