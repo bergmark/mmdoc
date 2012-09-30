@@ -5,6 +5,7 @@ import           Prelude hiding (exp)
 data AST = Package Name [AST]
          | Function Name [Param] [Stmt]
          | Comment String
+         | Union Name [Record]
          deriving (Eq, Show)
 
 data Param = Input Type Name
@@ -24,6 +25,9 @@ data Exp = EVar Name
 
 data Pat = PVar Var
            deriving (Eq, Show)
+
+data Record = Record
+            deriving (Eq, Show)
 
 type Var = String
 type Name = String

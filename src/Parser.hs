@@ -11,25 +11,38 @@ parseFile :: String -> Either ParseError [AST]
 parseFile = parse p_top "(unknown)"
 
 p_top :: CharParser st [AST]
-p_top = many (ws *> p_comment <|> p_pkg <* ws) <* eof
+p_top = p_top' <* eof
+
+p_top' :: CharParser st [AST]
+p_top' = many (ws *> (p_union <|> p_package <|> p_comment <|> p_function) <* ws)
 
 p_comment :: CharParser st AST
 p_comment = Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n"))
 
-p_pkg :: CharParser st AST
-p_pkg = do
-  ws
-  void $ string "package"
+p_union :: CharParser st AST
+p_union = do
+  str "uniontype"
+  ws1
+  t <- p_type
+  ws1
+  str "end"
+  ws1
+  void $ p_type
+  semi
+  return $ Union t []
+
+p_package :: CharParser st AST
+p_package = do
+  str "package"
   ws
   name <- p_name
   ws
-  fs <- many (p_comment <|> p_function)
+  fs <- p_top'
   ws
   void $ string "end"
   ws
   void $ p_name
   semi
-  ws
   return $ Package name fs
 
 p_function :: CharParser st AST
@@ -97,7 +110,7 @@ p_exp = try p_match <|> p_evar
 p_type :: CharParser st Type
 p_type = do
    u <- upper
-   s <- many1 letter
+   s <- many letter
    return $ u : s
 
 p_match :: CharParser st Exp

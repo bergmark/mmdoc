@@ -45,4 +45,5 @@ exps = [
   , "FunctionStatements" `tup` [Package "Package" [Function "f" [] [Assign (LVar "x") (EVar "y"),Assign (LVar "aoeu123") (EVar "aoeu123")]]]
   , "Match" `tup` [Package "Package" [Function "f" [] [Assign (LVar "x") (Match ["y"] [(PVar "z",EVar "w")])]]]
   , "Comment" `tup` [Comment " foo", Package "Package" [Comment " bar"]]
+  , "UnionType" `tup` [Package "P" [Union "U" []]]
   ] where tup = (,)
