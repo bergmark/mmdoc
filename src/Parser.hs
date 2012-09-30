@@ -25,11 +25,26 @@ p_union = do
   ws1
   t <- p_type
   ws1
+  rs <- many p_record
+  ws
   str "end"
   ws1
   void $ p_type
   semi
-  return $ Union t []
+  return $ Union t rs
+
+p_record :: CharParser st Record
+p_record = do
+  str "record"
+  ws1
+  n <- p_name
+  ws1
+  str "end"
+  ws1
+  void $ p_name
+  ws
+  semi
+  return $ Record n []
 
 p_package :: CharParser st AST
 p_package = do

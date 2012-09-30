@@ -46,4 +46,5 @@ exps = [
   , "Match" `tup` [Package "Package" [Function "f" [] [Assign (LVar "x") (Match ["y"] [(PVar "z",EVar "w")])]]]
   , "Comment" `tup` [Comment " foo", Package "Package" [Comment " bar"]]
   , "UnionType" `tup` [Package "P" [Union "U" []]]
+  , "UnionTypeRecord" `tup` [Union "U" [Record "R" []]]
   ] where tup = (,)

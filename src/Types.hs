@@ -26,8 +26,10 @@ data Exp = EVar Name
 data Pat = PVar Var
            deriving (Eq, Show)
 
-data Record = Record
+data Record = Record Name [VarDecl]
             deriving (Eq, Show)
+
+type VarDecl = (Type, Var)
 
 type Var = String
 type Name = String
