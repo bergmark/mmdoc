@@ -2,11 +2,12 @@
 
 module Parser where
 
+import           Control.Applicative
 import           Control.Arrow
-import           Prelude       hiding (exp)
+import           Prelude             hiding (exp)
 
-import           Tokenizer     (Token)
-import qualified Tokenizer     as T
+import           Tokenizer           (Token)
+import qualified Tokenizer           as T
 import           Types
 
 type TokenParser b = [Token] -> (b, [Token])
@@ -30,11 +31,26 @@ p_ast (T.Function : T.W name : xs) = case p_fun_vardecls xs of
     (stmts :: [Stmt], T.End : T.W _name : T.Semi : rest) -> ([Function name params stmts], rest)
     _ -> err "p_ast#2" xs'
   _ -> err "p_ast#1" xs
+p_ast (T.Union : T.W name : ts) = case p_records ts of
+  (recs, T.End : T.W _name : T.Semi : ts') -> ([Union name recs], ts')
+  (_, ts'') -> err "p_ast#4" ts''
 p_ast ts@(T.End : _) = ([], ts)
 p_ast ts = err "p_ast#3" ts
 
 err :: (Show s) => String -> s -> a
 err s xs = error $ s ++ " tail not handled " ++ show xs ++ "\n"
+
+p_records :: TokenParser [Record]
+p_records (T.Record : T.W name : ts) = case p_vardecls ts of
+  (vardecls, T.End : T.W _name : T.Semi : ts') -> first (Record name vardecls :) $ p_records ts'
+  _ -> err "p_records" ts
+p_records ts = ([], ts)
+
+p_vardecls :: [Token] -> ([VarDecl], [Token])
+p_vardecls ts = case p_vardecl ts of
+  (Nothing, ts') -> ([], ts')
+  (Just p,  ts') -> first (p :) $ p_vardecls ts'
+
 
 p_fun_vardecls :: [Token] -> ([Param], [Token])
 p_fun_vardecls ts = case p_fun_vardecl ts of
@@ -42,11 +58,15 @@ p_fun_vardecls ts = case p_fun_vardecl ts of
   (Just p,  ts') -> first (p :) $ p_fun_vardecls ts'
 
 p_fun_vardecl :: [Token] -> (Maybe Param, [Token])
-p_fun_vardecl (T.W "input"  : T.W typ : T.W var : T.Semi : xs) = (Just $ Input  typ var, xs)
-p_fun_vardecl (T.W "output" : T.W typ : T.W var : T.Semi : xs) = (Just $ Output typ var, xs)
+p_fun_vardecl (T.W "input"  : ts) = first (Input <$>) $ p_vardecl ts
+p_fun_vardecl (T.W "output" : ts) = first (Output <$>) $ p_vardecl ts
 p_fun_vardecl ts = (Nothing, ts)
 
-p_stmts :: [Token] -> ([Stmt], [Token])
+p_vardecl :: TokenParser (Maybe VarDecl)
+p_vardecl (T.W typ : T.W var : T.Semi : xs) = (Just $ (typ, var), xs)
+p_vardecl xs = (Nothing, xs)
+
+p_stmts :: TokenParser [Stmt]
 p_stmts ts = case p_stmt ts of
   (Nothing, ts') -> ([], ts')
   (Just s, ts') -> first (s :) $ p_stmts ts'

@@ -6,7 +6,7 @@ parserExpected :: [(String, [AST])]
 parserExpected = [
     "Package" `tup` [Package "Package" []]
   , "Function" `tup` [Package "Package" [Function "f" [] []]]
-  , "FunctionArgs" `tup` [Package "Package" [Function "f" [Input "Integer" "x",Input "Integer" "y",Output "Boolean" "b1",Output "Boolean" "b2"] []]]
+  , "FunctionArgs" `tup` [Package "Package" [Function "f" [Input ("Integer","x"),Input ("Integer","y"),Output ("Boolean","b1"),Output ("Boolean","b2")] []]]
   , "FunctionStatements" `tup` [Package "Package" [Function "f" [] [Assign "x" (EVar "y"),Assign "aoeu123" (EVar "aoeu123")]]]
   , "Match" `tup` [Package "Package" [Function "f" [] [Assign "x" (Match ["y"] [("z",EVar "w")])]]]
   , "Comment" `tup` [Comment " foo", Package "Package" [Comment " bar"]]

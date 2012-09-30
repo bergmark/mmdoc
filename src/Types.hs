@@ -9,8 +9,8 @@ data AST = Package Name [AST]
          | Union Name [Record]
          deriving (Eq, Show)
 
-data Param = Input Type Name
-           | Output Type Name
+data Param = Input VarDecl
+           | Output VarDecl
              deriving (Eq, Show)
 
 data Stmt = Assign Var Exp
