@@ -4,25 +4,25 @@ import           Prelude hiding (exp)
 
 data AST = Package Name [AST]
          | Function Name [Param] [Stmt]
-         deriving Show
+         deriving (Eq, Show)
 
 data Param = Input Type Name
            | Output Type Name
-             deriving Show
+             deriving (Eq, Show)
 
 data Stmt = Assign LHS Exp
-            deriving Show
+            deriving (Eq, Show)
 
 type Case = (Pat, Exp)
 
 data LHS = LVar Name
-         deriving Show
+         deriving (Eq, Show)
 data Exp = EVar Name
          | Match [Var] [Case]
-         deriving Show
+         deriving (Eq, Show)
 
 data Pat = PVar Var
-           deriving Show
+           deriving (Eq, Show)
 
 type Var = String
 type Name = String
