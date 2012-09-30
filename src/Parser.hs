@@ -97,18 +97,20 @@ p_ast T.Package = do
   void t_semi
   return $ Package name content
 p_ast T.Function = do
+  pr "function"
   name <- p_name
   params <- p_params
-  p_algorithm
+  t_algorithm
   stmts <- p_stmts
   t_end
   void p_name
+  t_semi
   return $ Function name params stmts
 p_ast (T.Comment s) = return $ Comment s
 p_ast _ = throwErr $ UnsupportedAstToken
 
-p_algorithm :: Parse ()
-p_algorithm = void $ tok ExpectedAlgorithm (== T.Algorithm)
+t_algorithm :: Parse ()
+t_algorithm = void $ tok ExpectedAlgorithm (== T.Algorithm)
 
 p_params :: Parse [Param]
 p_params =
@@ -124,13 +126,17 @@ p_param _ = throwErr ExpectedInputOutput
 p_stmts :: Parse [Stmt]
 p_stmts =
   look >>= \s -> case s of
-    Just s | (s /= T.Semi) -> eat >>= p_stmt >>= (\stmt -> (stmt :) <$> p_stmts)
+    Just s | (s /= T.End) -> eat >>= p_stmt >>= (\stmt -> (stmt :) <$> p_stmts)
     _ -> return []
 
 p_stmt :: Token -> Parse Stmt
 p_stmt (T.W lhs) =
   eat >>= \s -> case s of
-    T.W ":=" -> eat >>= \t -> p_exp t >>= \exp -> return (Assign lhs exp)
+    T.W ":=" -> do
+      t <- eat
+      exp <- p_exp t
+      t_semi
+      return (Assign lhs exp)
     _ -> throwErr ExpectedAssign
 p_stmt _ = throwErr ExpectedStmt
 
