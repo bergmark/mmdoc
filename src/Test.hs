@@ -12,6 +12,7 @@ import           Test.Framework
 import           Test.Framework.Providers.HUnit
 import           Test.HUnit                     (assertBool, assertEqual)
 
+
 import qualified Parser                         as P
 import           ParserTest
 import qualified Tokenizer                      as T
@@ -39,7 +40,8 @@ feither e f g = either f g e
 
 parserTests :: IO Test
 parserTests = do
-  files <- fmap (map ("tests" </>) . sort . filter dotMo) $ getDirectoryContents "tests"
+--  files <- fmap (map ("tests" </>) . sort . filter dotMo) $ getDirectoryContents "tests"
+  let files = ["tests/Package.mo"]
   return $ testGroup "Tests" $ flip map files $ \file ->
     testCase file $ do
       let name = (reverse . drop 1 . dropWhile (/= '.') . reverse . drop 1 . dropWhile (/= '/')) file
@@ -52,7 +54,7 @@ parserTests = do
           (\ts -> do
             r <- P.parse ts
             case r of
-              Left err -> error . show $ err
+              Left (P.ParseError perr (P.ParseState { P.parseTokens = ts })) -> error . show $ (perr, take 3 ts)
               Right res -> assertEqual name (fromJust expected) res)
   where dotMo = isSuffixOf ".mo"
 
@@ -60,5 +62,5 @@ main :: IO ()
 main = do
   tokenizer <- tokenizerTests
   parser <- parserTests
-  defaultMain [tokenizer, parser]
+  defaultMain [{-tokenizer,-} parser]
 
