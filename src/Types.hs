@@ -4,6 +4,7 @@ import           Prelude hiding (exp)
 
 data AST = Package Name [AST]
          | Function Name [Param] [Stmt]
+         | Comment String
          deriving (Eq, Show)
 
 data Param = Input Type Name

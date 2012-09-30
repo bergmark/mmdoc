@@ -7,12 +7,14 @@ import           Text.ParserCombinators.Parsec
 
 import           Types
 
-parseFile :: String -> Either ParseError AST
+parseFile :: String -> Either ParseError [AST]
 parseFile = parse p_top "(unknown)"
 
-p_top :: CharParser st AST
-p_top = ws *> p_pkg <* ws
+p_top :: CharParser st [AST]
+p_top = many (ws *> p_comment <|> p_pkg <* ws) <* eof
 
+p_comment :: CharParser st AST
+p_comment = Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n"))
 
 p_pkg :: CharParser st AST
 p_pkg = do
@@ -21,7 +23,7 @@ p_pkg = do
   ws
   name <- p_name
   ws
-  fs <- many p_function
+  fs <- many (p_comment <|> p_function)
   ws
   void $ string "end"
   ws
@@ -137,10 +139,10 @@ p_name = do
   return $ l : r
 
 ws1 :: CharParser st ()
-ws1 = void $ many1 (oneOf " \t\n")
+ws1 = void $ many1 (oneOf " \t\r\n")
 
 ws :: CharParser st ()
-ws = void $ many (oneOf " \t\n")
+ws = void $ many (oneOf " \t\r\n")
 
 semi :: CharParser st ()
 semi = void $ char ';'
