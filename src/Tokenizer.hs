@@ -1,3 +1,5 @@
+{-# OPTIONS -fno-warn-missing-signatures #-}
+
 module Tokenizer where
 
 import           Control.Applicative           hiding (many, (<|>))

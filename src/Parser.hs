@@ -10,12 +10,11 @@ import           Control.Applicative
 -- import           Control.Arrow
 import           Control.Monad
 import           Control.Monad.Error
-import           Control.Monad.Identity (Identity)
 import           Control.Monad.State
-import           Prelude                hiding (exp)
+import           Prelude             hiding (exp)
 
-import           Tokenizer              (Token)
-import qualified Tokenizer              as T
+import           Tokenizer           (Token)
+import qualified Tokenizer           as T
 import           Types
 
 data ParseState = ParseState { parseAsts :: [AST], parseTokens :: [Token] }
@@ -50,14 +49,6 @@ throwErr perr = do
   s <- gets id
   throwError $ ParseError perr s
 
--- | The JavaScript FFI interfacing monad.
-newtype Fay a = Fay (Identity a)
-  deriving Monad
-
-onEither :: (a -> a') -> (b -> b') -> Either a b -> Either a' b'
-onEither lf _ (Left l) = Left $ lf l
-onEither _ rf (Right r) = Right $ rf r
-
 parse :: T.Program -> IO (Either ParseError [AST])
 parse (T.Program ts) = do
   r :: Either ParseError ((), ParseState) <- runParse (parseState ts :: ParseState) parseTop
@@ -66,25 +57,10 @@ parse (T.Program ts) = do
 runParse :: ParseState -> Parse () -> IO (Either ParseError ((),ParseState))
 runParse st m = runErrorT (runStateT (unCompile m) st)
 
-look :: Parse (Maybe Token)
-look = do
-  s <- gets parseTokens
-  case s of
-    [T.EOF] -> return Nothing
-    (t:_) -> return (Just t)
-    _ -> throwErr MissingEOF
-
-eat :: Parse Token
-eat = do
-  t:ts <- gets parseTokens
-  modify (\s -> s { parseTokens = ts })
-  return t
-
-skip :: Parse ()
-skip = void eat
-
 addAst :: AST -> Parse ()
-addAst ast = modify $ \s -> s { parseAsts = ast : parseAsts s }
+addAst ast = do
+  pr ("add", ast)
+  modify $ \s -> s { parseAsts = ast : parseAsts s }
 
 pu :: MonadIO m => String -> m ()
 pu s = liftIO $ putStrLn s
@@ -93,18 +69,20 @@ pr s = liftIO $ print s
 
 parseTop :: Parse ()
 parseTop =
-  look >>= maybe (return ()) (const $ p_top >>= mapM_ addAst)
+  look >>= maybe (return ()) (const $ p_top >>= mapM_ addAst . reverse)
 
 p_top :: Parse [AST]
 p_top = look >>= aux
   where
     aux :: Maybe Token -> Parse [AST]
-    aux (Just T.Package) = do
+    aux (Just T.Package) = f
+    aux (Just (T.Comment _)) = f
+    aux _ = return []
+    f = do
       s <- eat
       ast <- p_ast s
       asts <- p_top
       return $ ast : asts
-    aux _ = return []
 
 p_ast :: Token -> Parse AST
 p_ast T.Package = do
@@ -114,17 +92,11 @@ p_ast T.Package = do
   void p_name
   void p_semi
   return $ Package name content
+p_ast (T.Comment s) = return $ Comment s
 p_ast _ = throwErr $ UnsupportedAstToken
 
 p_name :: Parse Name
 p_name = p_word
-
-tok :: PError -> (Token -> Bool) -> Parse Token
-tok err tokP = do
-  s <- look
-  case s of
-    Just t | tokP t -> eat >> return t
-    _ -> throwErr err
 
 p_end :: Parse ()
 p_end = void $ tok ExpectedEnd T.isEnd
@@ -136,10 +108,6 @@ p_semi :: Parse ()
 p_semi = void $ tok ExpectedSemi T.isSemi
 
 {-
-
-p_top :: ([AST], [Token]) -> ([AST], [Token])
-p_top t@(_,[]) = t
-p_top (astels, tokens) = let (ast,ts) = p_ast tokens in p_top (astels ++ ast, ts)
 
 p_ast :: [Token] -> ([AST], [Token])
 p_ast [] = ([],[])
@@ -367,3 +335,35 @@ p_name = do
   return $ l : r
 -}
 -}
+
+-- General parsing
+
+look :: Parse (Maybe Token)
+look = do
+  s <- gets parseTokens
+  case s of
+    [T.EOF] -> return Nothing
+    (t:_) -> return (Just t)
+    _ -> throwErr MissingEOF
+
+eat :: Parse Token
+eat = do
+  t:ts <- gets parseTokens
+  modify (\s -> s { parseTokens = ts })
+  return t
+
+skip :: Parse ()
+skip = void eat
+
+tok :: PError -> (Token -> Bool) -> Parse Token
+tok err tokP = do
+  s <- look
+  case s of
+    Just t | tokP t -> eat >> return t
+    _ -> throwErr err
+
+-- Misc
+
+onEither :: (a -> a') -> (b -> b') -> Either a b -> Either a' b'
+onEither lf _ (Left l) = Left $ lf l
+onEither _ rf (Right r) = Right $ rf r
