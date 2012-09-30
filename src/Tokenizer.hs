@@ -12,6 +12,7 @@ data Token = Semi -- ;
            | Comment String
            | End
            | Function
+           | MComment String
            | Package
            | Record
            | Union
@@ -25,12 +26,22 @@ p_top :: CharParser st [Token]
 p_top = many (ws *> p_token <* ws) <* eof
 
 p_token :: CharParser st Token
-p_token = semi' <|> try algorithm <|> try comment <|> try package <|> try union <|> try record <|> try function <|> try end <|> word
+p_token = semi'
+            <|> try algorithm
+            <|> try comment
+            <|> try end
+            <|> try function
+            <|> try mcomment
+            <|> try package
+            <|> try record
+            <|> try union
+            <|> word
   where
     algorithm = str "algorithm" *> return Algorithm
     comment   = Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n"))
     end       = str "end"       *> return End
     function  = str "function"  *> return Function
+    mcomment  = MComment <$> (str "/*" *> many (noneOf "*/") <* str "*/")
     package   = str "package"   *> return Package
     record    = str "record"    *> return Record
     semi'     = semi *> return Semi
