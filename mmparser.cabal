@@ -26,9 +26,10 @@ executable test
   ghc-options:       -Wall
   main-is:           Test.hs
   build-depends:     base >= 4 && < 5,
-                     parsec,
+                     HUnit,
                      directory,
                      filepath,
-                     HUnit,
+                     mtl,
+                     test-framework,
                      test-framework-hunit,
-                     test-framework
+                     parsec

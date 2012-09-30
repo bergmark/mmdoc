@@ -1,9 +1,11 @@
 module TokenTest where
 
+import           Control.Arrow
+
 import           Tokenizer
 
-tokenExpected :: [(String, [Token])]
-tokenExpected = [
+tokenExpected :: [(String, Program)]
+tokenExpected = map (second Program) [
     "Package" `tup` [Package, W "Package", End, W "Package", Semi]
   , "FunctionStatements" `tup` [Package, W "Package", Function, W "f", Algorithm, W "x", W ":=", W "y", Semi, W "aoeu123", W ":=", W "aoeu123", Semi, End, W "f", Semi, End, W "Package", Semi]
 --  , "Match" `tup` [Package "Package" [Function "f" [] [Assign (LVar "x") (Match ["y"] [(PVar "z",EVar "w")])]]]

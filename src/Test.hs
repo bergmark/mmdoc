@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+
 module Main where
 
 import           Control.Applicative
@@ -27,12 +29,13 @@ tokenizerTests = do
       let expected = name `lookup` tokenExpected
       when (isJust expected) $ do
         result <- T.parseFile <$> readFile file
-        either
+        feither result
           (assertEqual file (show $ fromJust expected) . show)
           (assertEqual file (fromJust expected))
-          result
   where dotMo = isSuffixOf ".mo"
 
+feither :: forall a c b. Either a b -> (a -> c) -> (b -> c) -> c
+feither e f g = either f g e
 
 parserTests :: IO Test
 parserTests = do
@@ -43,11 +46,10 @@ parserTests = do
       let expected = name `lookup` parserExpected
       assertBool (name ++ " is missing in parserExpected") (isJust expected)
       when (isJust expected) $ do
-        result <- P.parseFile <$> readFile file
-        either
-          (assertEqual file (show $ fromJust expected) . show)
-          (assertEqual file (fromJust expected))
-          result
+        tokens <- T.parseFile <$> readFile file
+        feither tokens
+          (const $ assertBool ("Could not tokenize " ++ name) False)
+          (assertEqual name (fromJust expected) . P.parseFile)
   where dotMo = isSuffixOf ".mo"
 
 main :: IO ()

@@ -5,7 +5,8 @@ import           Text.ParserCombinators.Parsec
 
 import           ParsecExtra
 
-type Program = [Token]
+data Program = Program [Token]
+             deriving (Eq, Show)
 
 data Token = Semi -- ;
            | Algorithm
@@ -19,11 +20,11 @@ data Token = Semi -- ;
            | W String
              deriving (Eq, Show)
 
-parseFile :: String -> Either ParseError [Token]
+parseFile :: String -> Either ParseError Program
 parseFile = parse p_top "(unknown)"
 
-p_top :: CharParser st [Token]
-p_top = many (ws *> p_token <* ws) <* eof
+p_top :: CharParser st Program
+p_top = Program <$> many (ws *> p_token <* ws) <* eof
 
 p_token :: CharParser st Token
 p_token = semi'
@@ -47,3 +48,4 @@ p_token = semi'
     semi'     = semi *> return Semi
     union     = str "uniontype" *> return Union
     word      = W <$> many1 (noneOf " \t\n\r;")
+
