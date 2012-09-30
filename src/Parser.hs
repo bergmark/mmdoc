@@ -107,6 +107,7 @@ p_ast T.Function = do
   t_semi
   return $ Function name params stmts
 p_ast (T.Comment s) = return $ Comment s
+p_ast (T.MComment s) = return $ MComment s
 p_ast _ = throwErr $ UnsupportedAstToken
 
 t_algorithm :: Parse ()
@@ -164,11 +165,14 @@ p_exp T.Match = do
   mvar <- p_name
   cases <- p_match_cases
   t_end
-  void $ tok ExpectedMatch (== T.Match)
+  t_match
   return $ Match [mvar] cases
 p_exp (T.W v) = do
   return $ EVar v
 p_exp _ = throwErr ExpectedMatch
+
+t_match :: Parse ()
+t_match = void $ tok ExpectedMatch (== T.Match)
 
 p_match_cases :: Parse [Case]
 p_match_cases =
