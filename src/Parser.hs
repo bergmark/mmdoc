@@ -6,8 +6,7 @@
 
 module Parser where
 
-import           Control.Applicative
--- import           Control.Arrow
+import           Control.Applicative hiding (many)
 import           Control.Monad
 import           Control.Monad.Error
 import           Control.Monad.State
@@ -145,10 +144,7 @@ p_param T.Output = Output <$> (eat >>= p_vardecl)
 p_param _ = throwErr ExpectedInputOutput
 
 p_stmts :: Parse [Stmt]
-p_stmts =
-  look >>= \s -> case s of
-    Just s | (s /= T.End) -> eat >>= p_stmt >>= (\stmt -> (stmt :) <$> p_stmts)
-    _ -> return []
+p_stmts = many (/= T.End) p_stmt
 
 p_stmt :: Token -> Parse Stmt
 p_stmt (T.W lhs) =
@@ -192,28 +188,22 @@ p_exp (T.W v) = do
 p_exp _ = throwErr ExpectedMatch
 
 p_match_cases :: Parse [Case]
-p_match_cases =
-  look >>= \s -> case s of
-    Just T.Case -> p_match_case >>= \c -> (c :) <$> p_match_cases
-    Just _ -> return []
+p_match_cases = many (== T.Case) p_match_case
 
-p_match_case :: Parse Case
-p_match_case = do
-  void $ tok ExpectedCase (== T.Case)
+p_match_case :: Token -> Parse Case
+p_match_case T.Case = do
   pat <- p_pat
   void $ tok ExpectedThen (== T.Then)
   exp <- eat >>= p_exp
   t_semi
   return (pat, exp)
+p_match_case _ = throwErr ExpectedCase
 
 p_pat :: Parse Pat
 p_pat = t_word
 
 p_vardecls :: Parse [VarDecl]
-p_vardecls =
-  look >>= \s -> case s of
-    Just (T.W _) -> eat >>= p_vardecl >>= \vd -> (vd :) <$> p_vardecls
-    Just _ -> return []
+p_vardecls = many T.isW p_vardecl
 
 p_vardecl :: Token -> Parse VarDecl
 p_vardecl (T.W typ) = do
@@ -267,6 +257,12 @@ tok err tokP = do
   case s of
     Just t | tokP t -> eat >> return t
     _ -> throwErr err
+
+many :: (Token -> Bool) -> (Token -> Parse a) -> Parse [a]
+many pred p =
+  look >>= \s -> case s of
+    Just s | pred s -> eat >>= p >>= (\res -> (res :) <$> many pred p)
+    _ -> return []
 
 -- Misc
 
