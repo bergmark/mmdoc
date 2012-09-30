@@ -94,7 +94,7 @@ p_ast T.Package = do
   content <- p_top
   t_end
   void p_name
-  void t_semi
+  t_semi
   return $ Package name content
 p_ast T.Function = do
   pr "function"
@@ -165,10 +165,8 @@ p_exp T.Match = do
   cases <- p_match_cases
   t_end
   void $ tok ExpectedMatch (== T.Match)
-  t_semi
   return $ Match [mvar] cases
 p_exp (T.W v) = do
-  t_semi
   return $ EVar v
 p_exp _ = throwErr ExpectedMatch
 
