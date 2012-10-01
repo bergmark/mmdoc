@@ -50,7 +50,7 @@ parserTests = do
       when (isJust expected) $ do
         tokens <- T.parseFile <$> readFile file
         feither tokens
-          (const $ assertBool ("Could not tokenize " ++ name) False)
+          (\err -> assertBool ("Could not tokenize " ++ name ++ ": " ++ show err) False)
           (\toks -> do
             r <- P.parse toks
             case r of

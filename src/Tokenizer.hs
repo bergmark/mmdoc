@@ -67,7 +67,7 @@ p_token = semi'
             <|> try (str "protected" *> return Protected)
             <|> try record
             <|> try union
-            <|> W <$> many1 (noneOf "{},. \t\n\r;")
+            <|> W <$> many1 (choice [letter, digit, oneOf ":=*"])
   where
     comment   = Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n"))
     output    = str "output"    *> return Output
