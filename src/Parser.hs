@@ -53,7 +53,6 @@ data PError = ExpectedAlgorithm
             | ExpectedThen
             | ExpectedWild
             | ExpectedWord
-            | MissingEOF
             | UnsupportedAstToken
   deriving (Show)
 instance Error ParseError
@@ -71,8 +70,9 @@ addAst ast = do
   modify $ \s -> s { parseAsts = ast : parseAsts s }
 
 parseTop :: Parse ()
-parseTop =
+parseTop = do
   look >>= maybe (return ()) (const $ p_top >>= mapM_ addAst . reverse)
+  t_eof
 
 p_top :: Parse [AST]
 p_top = many isAstStart p_ast
@@ -80,13 +80,7 @@ p_top = many isAstStart p_ast
 p_ast :: Token -> Parse AST
 p_ast (T.Comment s) = return $ Comment s
 p_ast (T.MComment s) = return $ MComment s
-p_ast T.Package = do
-  name <- p_name
-  content <- p_top
-  t_end
-  void p_name
-  t_semi
-  return $ Package name content
+p_ast T.Package = p_package T.Package
 p_ast T.Function = do
   name <- p_name
   params <- many T.isInputOutput p_param
@@ -105,6 +99,8 @@ p_ast T.Union = do
   return $ Union name recs
 p_ast T.Protected = do
   eat >>= p_ast >>= return . protectAst
+p_ast T.Encapsulated = do
+  eat >>= p_package >>= return . encapsulateAst
 p_ast T.Import = do
   protection <- maybe Unprotected (const Protected) <$> option (== T.Protected) t_protected
   name <- p_name
@@ -113,6 +109,16 @@ p_ast T.Import = do
   t_semi
   return $ Import protection name name' (maybe (Left Wild) id imports)
 p_ast _ = throwErr $ UnsupportedAstToken
+
+p_package :: Token -> Parse AST
+p_package T.Package = do
+  name <- p_name
+  content <- p_top
+  t_end
+  void p_name
+  t_semi
+  return $ Package Unencapsulated name content
+p_package _ = throwErr $ ExpectedTok [T.Package]
 
 p_importVars :: T.Token -> Parse (Either Wild [Name])
 p_importVars (T.W "*") = return $ Left Wild
@@ -199,6 +205,11 @@ p_name = t_word
 
 -- Tokens
 
+t_eof :: Parse ()
+t_eof = eat >>= \s -> case s of
+  T.EOF -> return ()
+  _ -> throwErr $ ExpectedTok [T.EOF]
+
 t_comma :: Parse ()
 t_comma = void $ tok ExpectedComma (== T.Comma)
 
@@ -242,7 +253,7 @@ look = do
   case s of
     [T.EOF] -> return Nothing
     (t:_) -> return (Just t)
-    _ -> throwErr MissingEOF
+    _ -> throwErr $ ExpectedTok [T.EOF]
 
 eat :: Parse Token
 eat = do
@@ -273,9 +284,6 @@ option pred p =
     _ -> return Nothing
 
 -- Misc
-
-pu :: MonadIO m => String -> m ()
-pu s = liftIO $ putStrLn s
 
 pr :: (MonadIO m, Show a) => a -> m ()
 pr s = liftIO $ print s

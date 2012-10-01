@@ -16,6 +16,7 @@ data Token = Semi -- ;
            | Comma
            | Comment String
            | Dot -- .
+           | Encapsulated
            | End
            | Function
            | Import
@@ -48,15 +49,16 @@ p_top = Program . (++ [EOF]) <$> many (ws *> p_token <* ws) <* eof
 
 p_token :: CharParser st Token
 p_token = semi'
-            <|> try (str "algorithm" *> return Algorithm)
-            <|> try (str ",")        *> return Comma
+            <|> try (str "algorithm"    *> return Algorithm)
+            <|> try (str ",")           *> return Comma
             <|> try comment
-            <|> try (str "."         *> return Dot)
-            <|> try (str "end"       *> return End)
-            <|> try (str "import"    *> return Import)
-            <|> try (str "input"     *> return Input)
-            <|> try (char '{'        *> return ListStart)
-            <|> try (char '}'        *> return ListEnd)
+            <|> try (str "."            *> return Dot)
+            <|> try (str "encapsulated" *> return Encapsulated)
+            <|> try (str "end"          *> return End)
+            <|> try (str "import"       *> return Import)
+            <|> try (str "input"        *> return Input)
+            <|> try (char '{'           *> return ListStart)
+            <|> try (char '}'           *> return ListEnd)
             <|> try output
             <|> try match
             <|> try function
@@ -64,7 +66,7 @@ p_token = semi'
             <|> try _case
             <|> try _then
             <|> try package
-            <|> try (str "protected" *> return Protected)
+            <|> try (str "protected"    *> return Protected)
             <|> try record
             <|> try union
             <|> W <$> many1 (choice [letter, digit, oneOf ":=*"])
