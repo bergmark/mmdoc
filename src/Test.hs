@@ -72,6 +72,6 @@ main :: IO ()
 main = do
   tokenizer <- tokenizerTests
   parser <- parserTests
-  pr <- printTests
-  defaultMain [tokenizer, parser, pr]
+  _pr <- printTests
+  defaultMain [tokenizer, parser{-, pr-}]
 
