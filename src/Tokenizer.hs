@@ -21,8 +21,8 @@ data Token = Semi -- ;
            | Function
            | Import
            | Input
-           | ListStart
            | ListEnd
+           | ListStart
            | MComment String
            | Match
            | Output
