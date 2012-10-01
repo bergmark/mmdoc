@@ -126,13 +126,11 @@ p_list T.ListStart = look >>= p_listContents
 p_list _ = throwErr $ ExpectedTok [T.ListStart]
 
 p_listContents :: Maybe T.Token -> Parse [Name]
-p_listContents (Just T.ListEnd) = eat >> return []
+p_listContents (Just T.ListEnd) = t_listEnd >> return []
 p_listContents (Just _) = do
   el <- p_name
-  mcomma <- option (== T.Comma) t_comma
-  case mcomma of
-    Just _ -> look >>= p_listContents >>= return . (el :)
-    Nothing -> t_listEnd >> return [el]
+  void $ option (== T.Comma) t_comma
+  look >>= p_listContents >>= return . (el :)
 p_listContents Nothing = error "p_listContents unreachable"
 
 p_records :: Parse [Record]

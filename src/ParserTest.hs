@@ -21,5 +21,6 @@ parserExpected = [
                     ]]
   , "ImportList" `tup` [Package "I" [
                          Import Unprotected "W"    Nothing       (Right [])
+                       , Import Unprotected "W"    Nothing       (Right ["a","b","cde"])
                        ]]
   ] where tup = (,)

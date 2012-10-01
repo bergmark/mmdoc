@@ -41,7 +41,7 @@ feither e f g = either f g e
 parserTests :: IO Test
 parserTests = do
   files <- fmap (map ("tests" </>) . sort . filter dotMo) $ getDirectoryContents "tests"
-  let files = map ("tests" </>) ["ImportList.mo"]
+-- let files = map ("tests" </>) ["ImportList.mo"]
   return $ testGroup "Tests" $ flip map files $ \file ->
     testCase file $ do
       let name = (reverse . drop 1 . dropWhile (/= '.') . reverse . drop 1 . dropWhile (/= '/')) file
