@@ -24,15 +24,15 @@ ind s = "  " ++ s
 
 
 instance Print AST where
-  pr (Package Encapsulated n cs) = concat [ "encapsulated package " ++ pr n ++ "\n"
+  pr (Package Encapsulated n d cs) = concat [ "encapsulated package " ++ pr n ++ "\n"
                                           , concatLines pr cs
                                           , "\nend " ++ pr n ++ ";"]
-  pr (Package Unencapsulated n cs) = "package " ++ pr n ++ "\n" ++ concatLines pr cs ++ "\nend " ++ pr n ++ ";"
-  pr (Function n ps _stms) = "function " ++ pr n ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
-  pr (PartFn n ps) = "partial function " ++ pr n ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
+  pr (Package Unencapsulated n d cs) = "package " ++ pr n ++ "\n" ++ concatLines pr cs ++ "\nend " ++ pr n ++ ";"
+  pr (Function n d ps _stms) = "function " ++ pr n ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
+  pr (PartFn n d ps) = "partial function " ++ pr n ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
   pr (Comment s) = "//" ++ s
   pr (MComment s) = "/*" ++ s ++ "*/"
-  pr (Union n rs) = concat [
+  pr (Union n d rs) = concat [
                        "uniontype " ++ pr n
                      ,   concatLines (ind . pr) rs
                      , "\nend " ++ pr n ++ ";"]

@@ -4,12 +4,12 @@ import           Prelude   hiding (exp)
 
 import qualified Tokenizer as T
 
-data AST = Package Encapsulation Name [AST]
-         | Function Name [Param] [Stmt]
+data AST = Package Encapsulation Name (Maybe DocString) [AST]
+         | Function Name (Maybe DocString) [Param] [Stmt]
          | Comment String  -- //
          | MComment String -- /* */
-         | PartFn Name [Param]
-         | Union Name [Record]
+         | PartFn Name (Maybe DocString) [Param]
+         | Union Name (Maybe DocString) [Record]
          | Import Protection Name (Maybe Name) (Either Wild [Name])
          | Replaceable Name
   deriving (Eq, Show)
@@ -32,7 +32,7 @@ protectAst (Import _ a b c) = Import Protected a b c
 protectAst ast = error $ "protectAst cannot protect " ++ show ast
 
 encapsulateAst :: AST -> AST
-encapsulateAst (Package _ a b) = Package Encapsulated a b
+encapsulateAst (Package _ d a b) = Package Encapsulated d a b
 encapsulateAst ast = error $ "encapsulateAst cannot encapsulate " ++ show ast
 
 data Protection = Protected | Unprotected
@@ -65,6 +65,7 @@ data Record = Record Name [VarDecl]
 
 type VarDecl = (Type, Var)
 
+type DocString = String
 type Var = String
 type Name = String
 type Type = String

@@ -64,28 +64,31 @@ p_ast (T.MComment s) = return $ MComment s
 p_ast T.Package = p_package T.Package
 p_ast T.Function = do
   name <- p_name
+  doc <- p_docstr
   params <- many T.isInputOutput p_param
   t_algorithm
   stmts <- many (/= T.End) p_stmt
   t_end
   void p_name
   t_semi
-  return $ Function name params stmts
+  return $ Function name doc params stmts
 p_ast T.Partial = do
   t_function
   name <- p_name
+  doc <- p_docstr
   params <- many T.isInputOutput p_param
   t_end
   void p_name
   t_semi
-  return $ PartFn name params
+  return $ PartFn name doc params
 p_ast T.Union = do
   name <- p_name
+  doc <- p_docstr
   recs <- p_records
   t_end
   void $ p_name
   t_semi
-  return $ Union name recs
+  return $ Union name doc recs
 p_ast T.Protected = do
   eat >>= p_ast >>= return . protectAst
 p_ast T.Encapsulated = do
@@ -100,7 +103,7 @@ p_ast (T.W "replaceable") = do
 p_ast T.Import = do
   protection <- maybe Unprotected (const Protected) <$> option (== T.Protected) t_protected
   name <- p_name
-  name' <- option (== T.W "=") (tok (ExpectedTok [T.W "="]) (== T.W "=") >> p_name)
+  name' <- option (== T.W "=") (token (ExpectedTok [T.W "="]) (== T.W "=") >> p_name)
   imports <- option (== T.Dot) (t_dot >> eat >>= p_importVars)
   t_semi
   return $ Import protection name name' (maybe (Left Wild) id imports)
@@ -109,11 +112,12 @@ p_ast _ = throwErr $ UnsupportedAstToken
 p_package :: Token -> Parse AST
 p_package T.Package = do
   name <- p_name
+  doc <- p_docstr
   content <- p_top
   t_end
   void p_name
   t_semi
-  return $ Package Unencapsulated name content
+  return $ Package Unencapsulated name doc content
 p_package _ = throwErr $ ExpectedTok [T.Package]
 
 p_importVars :: T.Token -> Parse (Either Wild [Name])
@@ -180,7 +184,7 @@ p_exp _ = throwErr $ ExpectedTok [T.Match]
 p_match_case :: Token -> Parse Case
 p_match_case T.Case = do
   pat <- p_pat
-  void $ tok (ExpectedTok [T.Then]) (== T.Then)
+  tok' T.Then
   exp <- eat >>= p_exp
   t_semi
   return (pat, exp)
@@ -199,6 +203,9 @@ p_vardecl _ = throwErr $ ExpectedTok [T.W "<<any>>"]
 p_name :: Parse Name
 p_name = t_word
 
+p_docstr :: Parse (Maybe String)
+p_docstr = option (T.isStr) t_str
+
 -- Tokens
 
 t_eof :: Parse ()
@@ -216,7 +223,7 @@ t_dot :: Parse ()
 t_dot = tok' T.Dot
 
 t_wild :: Parse ()
-t_wild = void $ tok (ExpectedTok [T.W "*"]) (== T.W "*")
+t_wild = tok' (T.W "*")
 
 t_protected :: Parse ()
 t_protected = tok' T.Protected
@@ -228,10 +235,13 @@ t_end :: Parse ()
 t_end = tok' T.End
 
 t_word :: Parse String
-t_word = T.fromW <$> tok (ExpectedTok [T.W "<<any>>"]) T.isW
+t_word = T.fromW <$> token (ExpectedTok [T.W "<<any>>"]) T.isW
+
+t_str :: Parse String
+t_str = T.fromStr <$> token (ExpectedTok [T.Str "<<any>>"]) T.isStr
 
 t_w :: String -> Parse String
-t_w s = T.fromW <$> tok (ExpectedTok [T.W s]) (== T.W s)
+t_w s = T.fromW <$> tok (T.W s)
 
 t_semi :: Parse ()
 t_semi = tok' T.Semi
@@ -267,15 +277,19 @@ eat = do
 skip :: Parse ()
 skip = void eat
 
-tok :: PError -> (Token -> Bool) -> Parse Token
-tok err tokP = do
+token :: PError -> (Token -> Bool) -> Parse Token
+token err tokP = do
   s <- look
   case s of
     Just t | tokP t -> eat >> return t
     _ -> throwErr err
 
+
+tok :: Token -> Parse Token
+tok t = token (ExpectedTok [t]) (== t)
+
 tok' :: Token -> Parse ()
-tok' t = void $ tok (ExpectedTok [t]) (== t)
+tok' = void . tok
 
 many :: (Token -> Bool) -> (Token -> Parse a) -> Parse [a]
 many pred p =

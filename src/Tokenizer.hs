@@ -10,8 +10,7 @@ import           ParsecExtra
 data Program = Program [Token]
              deriving (Eq, Show)
 
-data Token = Semi -- ;
-           | Algorithm
+data Token = Algorithm
            | Case
            | Comma
            | Comment String
@@ -30,16 +29,23 @@ data Token = Semi -- ;
            | Partial
            | Protected
            | Record
+           | Semi -- ;
            | Then
            | Union
+
+           | Str String
            | W String
            | EOF
              deriving (Eq, Show)
 
 isW (W _) = True
 isW _ = False
+isStr (Str _) = True
+isStr _ = False
 fromW (W s) = s
 fromW _ = error "fromW"
+fromStr (Str s) = s
+fromStr _ = error "fromStr"
 isInputOutput p = Input == p || Output == p
 
 parseFile :: String -> Either ParseError Program
@@ -71,4 +77,5 @@ p_token = (char ';' *> return Semi)
             <|> try (str "record"       *> return Record)
             <|> try (str "then"         *> return Then)
             <|> try (str "uniontype"    *> return Union)
+            <|> Str <$> between (char '"') (char '"') (many $ noneOf "\"")
             <|> W <$> many1 (choice [letter, digit, oneOf ":=*"])
