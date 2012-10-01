@@ -200,37 +200,37 @@ t_eof = eat >>= \s -> case s of
   _ -> throwErr $ ExpectedTok [T.EOF]
 
 t_comma :: Parse ()
-t_comma = void $ tok (ExpectedTok [T.Comma]) (== T.Comma)
+t_comma = tok' T.Comma
 
 t_listEnd :: Parse ()
-t_listEnd = void $ tok (ExpectedTok [T.ListEnd]) (== T.ListEnd)
+t_listEnd = tok' T.ListEnd
 
 t_dot :: Parse ()
-t_dot = void $ tok (ExpectedTok [T.Dot]) (== T.Dot)
+t_dot = tok' T.Dot
 
 t_wild :: Parse ()
 t_wild = void $ tok (ExpectedTok [T.W "*"]) (== T.W "*")
 
 t_protected :: Parse ()
-t_protected = void $ tok (ExpectedTok [T.Protected]) (== T.Protected)
+t_protected = tok' T.Protected
 
 t_match :: Parse ()
-t_match = void $ tok (ExpectedTok [T.Match]) (== T.Match)
+t_match = tok' T.Match
 
 t_end :: Parse ()
-t_end = void $ tok (ExpectedTok [T.End]) (== T.End)
+t_end = tok' T.End
 
 t_word :: Parse String
 t_word = T.fromW <$> tok (ExpectedTok [T.W "<<any>>"]) T.isW
 
 t_semi :: Parse ()
-t_semi = void $ tok (ExpectedTok [T.Semi]) (== T.Semi)
+t_semi = tok' T.Semi
 
 t_algorithm :: Parse ()
-t_algorithm = void $ tok (ExpectedTok [T.Algorithm]) (== T.Algorithm)
+t_algorithm = tok' T.Algorithm
 
 t_function :: Parse ()
-t_function = void $ tok (ExpectedTok [T.Function]) (== T.Function)
+t_function = tok' T.Function
 
 
 -- General parsing
@@ -263,6 +263,9 @@ tok err tokP = do
   case s of
     Just t | tokP t -> eat >> return t
     _ -> throwErr err
+
+tok' :: Token -> Parse ()
+tok' t = void $ tok (ExpectedTok [t]) (== t)
 
 many :: (Token -> Bool) -> (Token -> Parse a) -> Parse [a]
 many pred p =
