@@ -11,6 +11,7 @@ data AST = Package Encapsulation Name [AST]
          | PartFn Name [Param]
          | Union Name [Record]
          | Import Protection Name (Maybe Name) (Either Wild [Name])
+         | Replaceable Name
   deriving (Eq, Show)
 
 isAstStart :: T.Token -> Bool
@@ -23,6 +24,7 @@ isAstStart T.Import = True
 isAstStart T.Protected = True
 isAstStart T.Encapsulated = True
 isAstStart T.Partial = True
+isAstStart (T.W "replaceable") = True
 isAstStart _ = False
 
 protectAst :: AST -> AST

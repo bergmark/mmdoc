@@ -90,6 +90,13 @@ p_ast T.Protected = do
   eat >>= p_ast >>= return . protectAst
 p_ast T.Encapsulated = do
   eat >>= p_package >>= return . encapsulateAst
+p_ast (T.W "replaceable") = do
+  void $ t_w "type"
+  name <- p_name
+  void $ t_w "subtypeof"
+  void $ t_w "Any"
+  t_semi
+  return $ Replaceable name
 p_ast T.Import = do
   protection <- maybe Unprotected (const Protected) <$> option (== T.Protected) t_protected
   name <- p_name
@@ -222,6 +229,9 @@ t_end = tok' T.End
 
 t_word :: Parse String
 t_word = T.fromW <$> tok (ExpectedTok [T.W "<<any>>"]) T.isW
+
+t_w :: String -> Parse String
+t_w s = T.fromW <$> tok (ExpectedTok [T.W s]) (== T.W s)
 
 t_semi :: Parse ()
 t_semi = tok' T.Semi

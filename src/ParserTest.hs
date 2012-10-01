@@ -27,4 +27,5 @@ parserExpected = [
                        ]]
   , "EncapsulatedPackage" `tup` [Package Encapsulated "P" []]
   , "PartialFunction" `tup` [PartFn "X" [Input ("Integer", "a"), Output ("Integer", "b")]]
+  , "ReplaceableType" `tup` [Replaceable "Element"]
   ] where tup = (,)
