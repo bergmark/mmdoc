@@ -48,38 +48,25 @@ p_top :: CharParser st Program
 p_top = Program . (++ [EOF]) <$> many (ws *> p_token <* ws) <* eof
 
 p_token :: CharParser st Token
-p_token = semi'
+p_token = (char ';' *> return Semi)
+            <|> char ','                *> return Comma
+            <|> char '.'                *> return Dot
+            <|> char '{'                *> return ListStart
+            <|> char '}'                *> return ListEnd
+            <|> try (Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n")))
+            <|> try (fmap MComment $ str "/*" *> manyTill (noneOf "_") (try (string "*/")))
             <|> try (str "algorithm"    *> return Algorithm)
-            <|> try (str ",")           *> return Comma
-            <|> try comment
-            <|> try (str "."            *> return Dot)
+            <|> try (str "case"         *> return Case)
             <|> try (str "encapsulated" *> return Encapsulated)
             <|> try (str "end"          *> return End)
+            <|> try (str "function"     *> return Function)
             <|> try (str "import"       *> return Import)
             <|> try (str "input"        *> return Input)
-            <|> try (char '{'           *> return ListStart)
-            <|> try (char '}'           *> return ListEnd)
-            <|> try output
-            <|> try match
-            <|> try function
-            <|> try mcomment
-            <|> try _case
-            <|> try _then
-            <|> try package
+            <|> try (str "match"        *> return Match)
+            <|> try (str "output"       *> return Output)
+            <|> try (str "package"      *> return Package)
             <|> try (str "protected"    *> return Protected)
-            <|> try record
-            <|> try union
+            <|> try (str "record"       *> return Record)
+            <|> try (str "then"         *> return Then)
+            <|> try (str "uniontype"    *> return Union)
             <|> W <$> many1 (choice [letter, digit, oneOf ":=*"])
-  where
-    comment   = Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n"))
-    output    = str "output"    *> return Output
-    match     = str "match"     *> return Match
-    function  = str "function"  *> return Function
-    mcomment  = fmap MComment $ str "/*" *> manyTill (noneOf "_") (try (string "*/"))
-    package   = str "package"   *> return Package
-    record    = str "record"    *> return Record
-    _case     = str "case"      *> return Case
-    _then     = str "then"      *> return Then
-    semi'     = semi *> return Semi
-    union     = str "uniontype" *> return Union
-
