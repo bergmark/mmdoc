@@ -58,9 +58,26 @@ parserTests = do
               Right res -> assertEqual name (fromJust expected) res)
   where dotMo = isSuffixOf ".mo"
 
+printTests :: IO Test
+printTests = do
+  files <- fmap (map ("tests/print" </>) . sort . filter dotMo) $ getDirectoryContents "tests/print"
+  return $ testGroup "Printing" $ flip map files $ \file ->
+    testCase file $ do
+      let name = (reverse . drop 1 . dropWhile (/= '.') . reverse . drop 1 . dropWhile (/= '/')) file
+      tokens <- T.parseFile <$> readFile file
+      feither tokens
+        (\err -> assertBool ("Could not tokenize " ++ name ++ ": " ++ show err) False)
+        (\toks -> do
+          r <- P.parse toks
+          feither r
+            (\(P.ParseError perr (P.ParseState { P.parseTokens = ts })) -> error . show $ (perr, take 3 ts))
+            (\r -> assertBool "..." True >> print r))
+  where dotMo = isSuffixOf ".mo"
+
 main :: IO ()
 main = do
   tokenizer <- tokenizerTests
   parser <- parserTests
-  defaultMain [tokenizer, parser]
+  pr <- printTests
+  defaultMain [tokenizer, parser, pr]
 
