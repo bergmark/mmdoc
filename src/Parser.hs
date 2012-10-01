@@ -33,26 +33,7 @@ newtype Parse a = Parse { unCompile :: StateT ParseState (ErrorT ParseError IO) 
 data ParseError = ParseError PError ParseState
                   deriving Show
 
-data PError = ExpectedAlgorithm
-            | ExpectedTok [T.Token]
-            | ExpectedEnd
-            | ExpectedComma
-            | ExpectedListStart
-            | ExpectedListEnd
-            | ExpectedEqual
-            | ExpectedAssign
-            | ExpectedCase
-            | ExpectedDot
-            | ExpectedInput
-            | ExpectedInputOutput
-            | ExpectedMatch
-            | ExpectedProtected
-            | ExpectedRecord
-            | ExpectedSemi
-            | ExpectedStmt
-            | ExpectedThen
-            | ExpectedWild
-            | ExpectedWord
+data PError = ExpectedTok [T.Token]
             | UnsupportedAstToken
   deriving (Show)
 instance Error ParseError
@@ -104,7 +85,7 @@ p_ast T.Encapsulated = do
 p_ast T.Import = do
   protection <- maybe Unprotected (const Protected) <$> option (== T.Protected) t_protected
   name <- p_name
-  name' <- option (== T.W "=") (tok ExpectedEqual (== T.W "=") >> p_name)
+  name' <- option (== T.W "=") (tok (ExpectedTok [T.W "="]) (== T.W "=") >> p_name)
   imports <- option (== T.Dot) (t_dot >> eat >>= p_importVars)
   t_semi
   return $ Import protection name name' (maybe (Left Wild) id imports)
@@ -153,12 +134,12 @@ p_record T.Record = do
   void $ p_name
   t_semi
   return $ Record name vardecls
-p_record _ = throwErr ExpectedRecord
+p_record _ = throwErr (ExpectedTok [T.Record])
 
 p_param :: Token -> Parse Param
 p_param T.Input = Input <$> (eat >>= p_vardecl)
 p_param T.Output = Output <$> (eat >>= p_vardecl)
-p_param _ = throwErr ExpectedInputOutput
+p_param _ = throwErr $ ExpectedTok [T.Input, T.Output]
 
 p_stmt :: Token -> Parse Stmt
 p_stmt (T.W lhs) =
@@ -168,8 +149,8 @@ p_stmt (T.W lhs) =
       exp <- p_exp t
       t_semi
       return (Assign lhs exp)
-    _ -> throwErr ExpectedAssign
-p_stmt _ = throwErr ExpectedStmt
+    _ -> throwErr $ ExpectedTok [T.W ":="]
+p_stmt _ = throwErr $ ExpectedTok [T.W "<<any>>"]
 
 p_exp :: Token -> Parse Exp
 p_exp T.Match = do
@@ -179,16 +160,16 @@ p_exp T.Match = do
   t_match
   return $ Match [mvar] cases
 p_exp (T.W v) = return $ EVar v
-p_exp _ = throwErr ExpectedMatch
+p_exp _ = throwErr $ ExpectedTok [T.Match]
 
 p_match_case :: Token -> Parse Case
 p_match_case T.Case = do
   pat <- p_pat
-  void $ tok ExpectedThen (== T.Then)
+  void $ tok (ExpectedTok [T.Then]) (== T.Then)
   exp <- eat >>= p_exp
   t_semi
   return (pat, exp)
-p_match_case _ = throwErr ExpectedCase
+p_match_case _ = throwErr $ ExpectedTok [T.Case]
 
 p_pat :: Parse Pat
 p_pat = t_word
@@ -198,7 +179,7 @@ p_vardecl (T.W typ) = do
   var <- p_name
   t_semi
   return (typ, var)
-p_vardecl _ = throwErr ExpectedWord
+p_vardecl _ = throwErr $ ExpectedTok [T.W "<<any>>"]
 
 p_name :: Parse Name
 p_name = t_word
@@ -211,34 +192,34 @@ t_eof = eat >>= \s -> case s of
   _ -> throwErr $ ExpectedTok [T.EOF]
 
 t_comma :: Parse ()
-t_comma = void $ tok ExpectedComma (== T.Comma)
+t_comma = void $ tok (ExpectedTok [T.Comma]) (== T.Comma)
 
 t_listEnd :: Parse ()
-t_listEnd = void $ tok ExpectedListEnd (== T.ListEnd)
+t_listEnd = void $ tok (ExpectedTok [T.ListEnd]) (== T.ListEnd)
 
 t_dot :: Parse ()
-t_dot = void $ tok ExpectedDot (== T.Dot)
+t_dot = void $ tok (ExpectedTok [T.Dot]) (== T.Dot)
 
 t_wild :: Parse ()
-t_wild = void $ tok ExpectedWild (== T.W "*")
+t_wild = void $ tok (ExpectedTok [T.W "*"]) (== T.W "*")
 
 t_protected :: Parse ()
-t_protected = void $ tok ExpectedProtected (== T.Protected)
+t_protected = void $ tok (ExpectedTok [T.Protected]) (== T.Protected)
 
 t_match :: Parse ()
-t_match = void $ tok ExpectedMatch (== T.Match)
+t_match = void $ tok (ExpectedTok [T.Match]) (== T.Match)
 
 t_end :: Parse ()
-t_end = void $ tok ExpectedEnd (== T.End)
+t_end = void $ tok (ExpectedTok [T.End]) (== T.End)
 
 t_word :: Parse String
-t_word = T.fromW <$> tok ExpectedWord T.isW
+t_word = T.fromW <$> tok (ExpectedTok [T.W "<<any>>"]) T.isW
 
 t_semi :: Parse ()
-t_semi = void $ tok ExpectedSemi (== T.Semi)
+t_semi = void $ tok (ExpectedTok [T.Semi]) (== T.Semi)
 
 t_algorithm :: Parse ()
-t_algorithm = void $ tok ExpectedAlgorithm (== T.Algorithm)
+t_algorithm = void $ tok (ExpectedTok [T.Algorithm]) (== T.Algorithm)
 
 -- General parsing
 
