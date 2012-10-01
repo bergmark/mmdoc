@@ -27,6 +27,7 @@ data Token = Semi -- ;
            | Match
            | Output
            | Package
+           | Partial
            | Protected
            | Record
            | Then
@@ -65,6 +66,7 @@ p_token = (char ';' *> return Semi)
             <|> try (str "match"        *> return Match)
             <|> try (str "output"       *> return Output)
             <|> try (str "package"      *> return Package)
+            <|> try (str "partial"      *> return Partial)
             <|> try (str "protected"    *> return Protected)
             <|> try (str "record"       *> return Record)
             <|> try (str "then"         *> return Then)

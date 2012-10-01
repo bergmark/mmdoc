@@ -71,6 +71,14 @@ p_ast T.Function = do
   void p_name
   t_semi
   return $ Function name params stmts
+p_ast T.Partial = do
+  t_function
+  name <- p_name
+  params <- many T.isInputOutput p_param
+  t_end
+  void p_name
+  t_semi
+  return $ PartFn name params
 p_ast T.Union = do
   name <- p_name
   recs <- p_records
@@ -220,6 +228,10 @@ t_semi = void $ tok (ExpectedTok [T.Semi]) (== T.Semi)
 
 t_algorithm :: Parse ()
 t_algorithm = void $ tok (ExpectedTok [T.Algorithm]) (== T.Algorithm)
+
+t_function :: Parse ()
+t_function = void $ tok (ExpectedTok [T.Function]) (== T.Function)
+
 
 -- General parsing
 

@@ -19,8 +19,8 @@ tokenExpected = map (second (Program . (++ [EOF]))) [
                             ,   End, W "Tup", Semi
                             , End, W "U", Semi]
   , "MComment" `tup` [ MComment "\nhej\npackage Foo\n"
-                    , Package, W "F"
-                    , MComment " end F; "
-                    , End, W "F", Semi
-                    , MComment "*\n * hej\n "]
+                     , Package, W "F"
+                     , MComment " end F; "
+                     , End, W "F", Semi
+                     , MComment "*\n * hej\n "]
   ] where tup = (,)

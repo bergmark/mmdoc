@@ -26,4 +26,5 @@ parserExpected = [
                        , Import Unprotected "W"    Nothing       (Right ["a","b","cde"])
                        ]]
   , "EncapsulatedPackage" `tup` [Package Encapsulated "P" []]
+  , "PartialFunction" `tup` [PartFn "X" [Input ("Integer", "a"), Output ("Integer", "b")]]
   ] where tup = (,)
