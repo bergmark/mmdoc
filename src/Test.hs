@@ -1,5 +1,3 @@
-{-# LANGUAGE RankNTypes #-}
-
 module Main where
 
 import           Control.Applicative
@@ -12,9 +10,10 @@ import           Test.Framework
 import           Test.Framework.Providers.HUnit
 import           Test.HUnit                     (assertBool, assertEqual)
 
-
+import           Misc
 import qualified Parser                         as P
 import           ParserTest
+import qualified Print
 import qualified Tokenizer                      as T
 import           TokenTest
 
@@ -33,10 +32,6 @@ tokenizerTests = do
         feither result
           (assertEqual file (show $ fromJust expected) . show)
           (assertEqual file (fromJust expected))
-  where dotMo = isSuffixOf ".mo"
-
-feither :: forall a c b. Either a b -> (a -> c) -> (b -> c) -> c
-feither e f g = either f g e
 
 parserTests :: IO Test
 parserTests = do
@@ -56,7 +51,6 @@ parserTests = do
             case r of
               Left (P.ParseError perr (P.ParseState { P.parseTokens = ts })) -> error . show $ (perr, take 3 ts)
               Right res -> assertEqual name (fromJust expected) res)
-  where dotMo = isSuffixOf ".mo"
 
 printTests :: IO Test
 printTests = do
@@ -64,15 +58,15 @@ printTests = do
   return $ testGroup "Printing" $ flip map files $ \file ->
     testCase file $ do
       let name = (reverse . drop 1 . dropWhile (/= '.') . reverse . drop 1 . dropWhile (/= '/')) file
-      tokens <- T.parseFile <$> readFile file
+      contents <- readFile file
+      let tokens = T.parseFile contents
       feither tokens
         (\err -> assertBool ("Could not tokenize " ++ name ++ ": " ++ show err) False)
         (\toks -> do
-          r <- P.parse toks
-          feither r
+          res <- P.parse toks
+          feither res
             (\(P.ParseError perr (P.ParseState { P.parseTokens = ts })) -> error . show $ (perr, take 3 ts))
-            (\r -> assertBool "..." True >> print r))
-  where dotMo = isSuffixOf ".mo"
+            (\r -> assertEqual name contents (Print.printSrc r)))
 
 main :: IO ()
 main = do
