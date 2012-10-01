@@ -12,19 +12,25 @@ data Program = Program [Token]
 
 data Token = Semi -- ;
            | Algorithm
+           | Case
+           | Comma
            | Comment String
+           | Dot -- .
            | End
            | Function
+           | Import
+           | Input
+           | ListStart
+           | ListEnd
            | MComment String
+           | Match
+           | Output
            | Package
+           | Protected
            | Record
+           | Then
            | Union
            | W String
-           | Input
-           | Output
-           | Match
-           | Case
-           | Then
            | EOF
              deriving (Eq, Show)
 
@@ -42,10 +48,15 @@ p_top = Program . (++ [EOF]) <$> many (ws *> p_token <* ws) <* eof
 
 p_token :: CharParser st Token
 p_token = semi'
-            <|> try algorithm
+            <|> try (str "algorithm" *> return Algorithm)
+            <|> try (str ",")        *> return Comma
             <|> try comment
-            <|> try end
-            <|> try input
+            <|> try (str "."         *> return Dot)
+            <|> try (str "end"       *> return End)
+            <|> try (str "import"    *> return Import)
+            <|> try (str "input"     *> return Input)
+            <|> try (char '{'        *> return ListStart)
+            <|> try (char '}'        *> return ListEnd)
             <|> try output
             <|> try match
             <|> try function
@@ -53,14 +64,12 @@ p_token = semi'
             <|> try _case
             <|> try _then
             <|> try package
+            <|> try (str "protected" *> return Protected)
             <|> try record
             <|> try union
-            <|> word
+            <|> W <$> many1 (noneOf ". \t\n\r;")
   where
-    algorithm = str "algorithm" *> return Algorithm
     comment   = Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n"))
-    end       = str "end"       *> return End
-    input     = str "input"     *> return Input
     output    = str "output"    *> return Output
     match     = str "match"     *> return Match
     function  = str "function"  *> return Function
@@ -71,5 +80,4 @@ p_token = semi'
     _then     = str "then"      *> return Then
     semi'     = semi *> return Semi
     union     = str "uniontype" *> return Union
-    word      = W <$> many1 (noneOf " \t\n\r;")
 

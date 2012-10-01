@@ -13,4 +13,13 @@ parserExpected = [
   , "UnionType" `tup` [Package "P" [Union "U" []]]
   , "UnionTypeRecord" `tup` [Union "U" [Record "R" [], Record "Tup" [("Integer","a"), ("String","b")]]]
   , "MComment" `tup` [MComment "\nhej\npackage Foo\n", Package "F" [MComment " end F; "], MComment "*\n * hej\n "]
+  , "Import" `tup` [Package "I" [
+                       Import Unprotected "X"    Nothing       (Left Wild)
+                     , Import Protected   "Y"    Nothing       (Left Wild)
+                     , Import Unprotected "L"    (Just "Long") (Left Wild)
+                     , Import Protected   "Z"    Nothing       (Left Wild)
+                    ]]
+  , "ImportList" `tup` [Package "I" [
+                         Import Unprotected "W"    Nothing       (Right [])
+                       ]]
   ] where tup = (,)

@@ -34,16 +34,24 @@ data ParseError = ParseError PError ParseState
                   deriving Show
 
 data PError = ExpectedAlgorithm
+            | ExpectedTok [T.Token]
             | ExpectedEnd
+            | ExpectedComma
+            | ExpectedListStart
+            | ExpectedListEnd
+            | ExpectedEqual
             | ExpectedAssign
             | ExpectedCase
+            | ExpectedDot
             | ExpectedInput
             | ExpectedInputOutput
             | ExpectedMatch
+            | ExpectedProtected
             | ExpectedRecord
             | ExpectedSemi
             | ExpectedStmt
             | ExpectedThen
+            | ExpectedWild
             | ExpectedWord
             | MissingEOF
             | UnsupportedAstToken
@@ -95,7 +103,37 @@ p_ast T.Union = do
   void $ p_name
   t_semi
   return $ Union name recs
+p_ast T.Protected = do
+  eat >>= p_ast >>= return . protectAst
+p_ast T.Import = do
+  protection <- maybe Unprotected (const Protected) <$> option (== T.Protected) t_protected
+  name <- p_name
+  name' <- option (== T.W "=") (tok ExpectedEqual (== T.W "=") >> p_name)
+  imports <- option (== T.Dot) (t_dot >> eat >>= p_importVars)
+  t_semi
+  return $ Import protection name name' (maybe (Left Wild) id imports)
 p_ast _ = throwErr $ UnsupportedAstToken
+
+p_importVars :: T.Token -> Parse (Either Wild [Name])
+p_importVars (T.W "*") = return $ Left Wild
+p_importVars T.ListStart = do
+  l <- p_list T.ListStart
+  return $ Right l
+p_importVars _ = throwErr $ ExpectedTok [T.W "*", T.ListStart]
+
+p_list :: T.Token -> Parse [Name]
+p_list T.ListStart = look >>= p_listContents
+p_list _ = throwErr $ ExpectedTok [T.ListStart]
+
+p_listContents :: Maybe T.Token -> Parse [Name]
+p_listContents (Just T.ListEnd) = eat >> return []
+p_listContents (Just _) = do
+  el <- p_name
+  mcomma <- option (== T.Comma) t_comma
+  case mcomma of
+    Just _ -> look >>= p_listContents >>= return . (el :)
+    Nothing -> t_listEnd >> return [el]
+p_listContents Nothing = error "p_listContents unreachable"
 
 p_records :: Parse [Record]
 p_records =
@@ -163,6 +201,21 @@ p_name = t_word
 
 -- Tokens
 
+t_comma :: Parse ()
+t_comma = void $ tok ExpectedComma (== T.Comma)
+
+t_listEnd :: Parse ()
+t_listEnd = void $ tok ExpectedListEnd (== T.ListEnd)
+
+t_dot :: Parse ()
+t_dot = void $ tok ExpectedDot (== T.Dot)
+
+t_wild :: Parse ()
+t_wild = void $ tok ExpectedWild (== T.W "*")
+
+t_protected :: Parse ()
+t_protected = void $ tok ExpectedProtected (== T.Protected)
+
 t_match :: Parse ()
 t_match = void $ tok ExpectedMatch (== T.Match)
 
@@ -214,6 +267,12 @@ many pred p =
   look >>= \s -> case s of
     Just v | pred v -> eat >>= p >>= (\res -> (res :) <$> many pred p)
     _ -> return []
+
+option :: (Token -> Bool) -> Parse a -> Parse (Maybe a)
+option pred p =
+  look >>= \s -> case s of
+    Just v | pred v -> p >>= return . Just
+    _ -> return Nothing
 
 -- Misc
 
