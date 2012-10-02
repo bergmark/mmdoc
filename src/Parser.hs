@@ -223,9 +223,12 @@ p_exp (T.W v) =
       return $ InfixApp op (EVar v) e
     _ -> return $ EVar v
 p_exp T.ParenL = do
-  ts <- commaSep (eat >>= p_exp) T.ParenR
-  tok' T.ParenR
-  return (Tuple ts)
+  lookIs T.ParenR >>= \b -> if b
+    then eat >> return Unit
+    else do
+      ts <- commaSep (eat >>= p_exp) T.ParenR
+      tok' T.ParenR
+      return (Tuple ts)
 p_exp _ = throwErr $ ExpectedTok [T.Match, T.W "<<any>>", T.ParenL]
 
 p_expList :: Token -> Parse [Exp]

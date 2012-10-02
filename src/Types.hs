@@ -64,6 +64,7 @@ data Exp = EVar Name
          | Funcall Name [Exp]
          | InfixApp Op Exp Exp
          | Tuple [Exp]
+         | Unit -- ()
          -- TODO List
   deriving (Eq, Show)
 

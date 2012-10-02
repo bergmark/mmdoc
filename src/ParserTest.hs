@@ -63,14 +63,16 @@ parserExpected = [
                     , StmtExp (Funcall "g" [Funcall "f" [], EVar "x", EVar "y"])
                     ]]
   , "TypeAlias" `tup` [TypeAlias "X" "Y"]
-  , "Underscores" `tup` [Function "f" [] Nothing [] [Assign ["_"] (EVar "x")]]
-  , "Operators" `tup` [Function "f" [] Nothing [] [
+  , "Underscores" `tup` [func "f" [Assign ["_"] (EVar "x")]]
+  , "Operators" `tup` [func "f" [
                         StmtExp (InfixApp "+&" (EVar "a") (EVar "b"))
                       , StmtExp (InfixApp "/" (EVar "c") (EVar "d"))
                       , StmtExp (InfixApp "*" (EVar "e") (EVar "f"))
                       , StmtExp (InfixApp "*" (EVar "e") (InfixApp "/" (EVar "g") (EVar "h")))
                       ]]
-  , "Tuples" `tup` [Function "f" [] Nothing [] [
+  , "Tuples" `tup` [func "f" [
                      Assign ["x","y"] (Tuple [EVar "z",EVar "w"])
                    ]]
+  , "Unit" `tup` [func "f" [Assign ["x"] Unit]]
+
   ] where tup = (,)
