@@ -57,6 +57,7 @@ type Case = (Pat, Exp)
 
 data Exp = EVar Name
          | Match [Var] [Case]
+         | Funcall Name [Exp]
   deriving (Eq, Show)
 
 type Pat = Var

@@ -190,7 +190,10 @@ p_exp T.Match = do
   t_end
   t_match
   return $ Match [mvar] cases
-p_exp (T.W v) = return $ EVar v
+p_exp (T.W v) =
+  look >>= \s -> case s of
+    Just T.ParenL -> tok' T.ParenL >> tok' T.ParenR >> return (Funcall v [])
+    _ -> return $ EVar v
 p_exp _ = throwErr $ ExpectedTok [T.Match]
 
 p_match_case :: Token -> Parse Case

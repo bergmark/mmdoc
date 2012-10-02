@@ -28,6 +28,8 @@ data Token = Algorithm
            | Match
            | Output
            | Package
+           | ParenL
+           | ParenR
            | Partial
            | Protected
            | Record
@@ -57,29 +59,32 @@ p_top :: CharParser st Program
 p_top = Program . (++ [EOF]) <$> many (ws *> p_token <* ws) <* eof
 
 p_token :: CharParser st Token
-p_token = (char ';' *> return Semi)
-            <|> char ','                *> return Comma
-            <|> char '.'                *> return Dot
-            <|> char '{'                *> return ListStart
-            <|> char '}'                *> return ListEnd
-            <|> char '<'                *> return Lt
-            <|> char '>'                *> return Gt
-            <|> try (Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n")))
-            <|> try (fmap MComment $ str "/*" *> manyTill (noneOf "_") (try (string "*/")))
-            <|> try (str "algorithm"    *> return Algorithm)
-            <|> try (str "case"         *> return Case)
-            <|> try (str "encapsulated" *> return Encapsulated)
-            <|> try (str "end"          *> return End)
-            <|> try (str "function"     *> return Function)
-            <|> try (str "import"       *> return Import)
-            <|> try (str "input"        *> return Input)
-            <|> try (str "match"        *> return Match)
-            <|> try (str "output"       *> return Output)
-            <|> try (str "package"      *> return Package)
-            <|> try (str "partial"      *> return Partial)
-            <|> try (str "protected"    *> return Protected)
-            <|> try (str "record"       *> return Record)
-            <|> try (str "then"         *> return Then)
-            <|> try (str "uniontype"    *> return Union)
-            <|> Str <$> between (char '"') (char '"') (many $ noneOf "\"")
-            <|> W <$> many1 (choice [letter, digit, oneOf ":=*"])
+p_token =
+  (char ';' *> return Semi)
+    <|> char '('                *> return ParenL
+    <|> char ')'                *> return ParenR
+    <|> char ','                *> return Comma
+    <|> char '.'                *> return Dot
+    <|> char '<'                *> return Lt
+    <|> char '>'                *> return Gt
+    <|> char '{'                *> return ListStart
+    <|> char '}'                *> return ListEnd
+    <|> try (Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n")))
+    <|> try (fmap MComment $ str "/*" *> manyTill (noneOf "_") (try (string "*/")))
+    <|> try (str "algorithm"    *> return Algorithm)
+    <|> try (str "case"         *> return Case)
+    <|> try (str "encapsulated" *> return Encapsulated)
+    <|> try (str "end"          *> return End)
+    <|> try (str "function"     *> return Function)
+    <|> try (str "import"       *> return Import)
+    <|> try (str "input"        *> return Input)
+    <|> try (str "match"        *> return Match)
+    <|> try (str "output"       *> return Output)
+    <|> try (str "package"      *> return Package)
+    <|> try (str "partial"      *> return Partial)
+    <|> try (str "protected"    *> return Protected)
+    <|> try (str "record"       *> return Record)
+    <|> try (str "then"         *> return Then)
+    <|> try (str "uniontype"    *> return Union)
+    <|> Str <$> between (char '"') (char '"') (many $ noneOf "\"")
+    <|> W <$> many1 (choice [letter, digit, oneOf ":=*"])
