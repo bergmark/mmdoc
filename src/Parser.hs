@@ -193,9 +193,9 @@ p_stmt T.ParenL = do
 p_stmt T.If = do
   iff <- p_if'
   eifs <- many (== T.Elseif) (const p_if')
-  elsestmt <- option (== T.Else) (eat >> eat >>= p_stmt)
+  elsestmt <- option (== T.Else) (eat >> many (/= T.End) p_stmt)
   tok' T.End >> tok' T.If >> tok' T.Semi
-  return $ If (iff : eifs) ((:[]) <$> elsestmt)
+  return $ If (iff : eifs) elsestmt
 p_stmt _ = throwErr $ ExpectedTok [T.W "<<any>>", T.ParenL, T.If]
 
 p_if' :: Parse (Exp, [Stmt])

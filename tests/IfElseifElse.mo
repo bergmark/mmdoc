@@ -7,5 +7,6 @@ algorithm
     d;
   else
     e;
+    f;
   end if;
 end f;

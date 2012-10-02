@@ -79,7 +79,7 @@ parserExpected = [
                            If [
                              (InfixApp "==" (EVar "x") (EVar "y"), [Assign ["a"] (EVar "b")])
                            , (EVar "z", [StmtExp (EVar "c"), StmtExp (EVar "d")])
-                           ] (Just [StmtExp (EVar "e")])
+                           ] (Just [StmtExp (EVar "e"), StmtExp (EVar "f")])
                           ]]
 
   ] where tup = (,)
