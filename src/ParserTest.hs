@@ -2,16 +2,25 @@ module ParserTest where
 
 import           Types
 
+ty :: String -> Type
+ty s = Type s []
+
 parserExpected :: [(String, [AST])]
 parserExpected = [
     "Package" `tup` [Package Unencapsulated "Package" Nothing []]
-  , "Function" `tup` [Package Unencapsulated "Package" Nothing [Function "f" Nothing [] []]]
-  , "FunctionArgs" `tup` [Package Unencapsulated "Package" Nothing [Function "f" Nothing [Input ("Integer","x"),Input ("Integer","y"),Output ("Boolean","b1"),Output ("Boolean","b2")] []]]
-  , "FunctionStatements" `tup` [Package Unencapsulated "Package" Nothing [Function "f" Nothing [] [Assign "x" (EVar "y"),Assign "aoeu123" (EVar "aoeu123")]]]
-  , "Match" `tup` [Package Unencapsulated "Package" Nothing [Function "f" Nothing [] [Assign "x" (Match ["y"] [("z",EVar "w")])]]]
+  , "Function" `tup` [Package Unencapsulated "Package" Nothing [Function "f" [] Nothing [] []]]
+  , "FunctionArgs" `tup` [Package Unencapsulated "Package" Nothing
+                           [Function "f" [] Nothing
+                             [Input (ty "Integer", "x")
+                             ,Input (ty "Integer","y")
+                             ,Output (ty "Boolean","b1")
+                             ,Output (ty "Boolean","b2")] []]]
+  , "FunctionStatements" `tup` [Package Unencapsulated "Package" Nothing [Function "f" [] Nothing [] [Assign "x" (EVar "y"),Assign "aoeu123" (EVar "aoeu123")]]]
+  , "Match" `tup` [Package Unencapsulated "Package" Nothing
+                    [Function "f" [] Nothing [] [Assign "x" (Match ["y"] [("z",EVar "w")])]]]
   , "Comment" `tup` [Comment " foo", Package Unencapsulated "Package" Nothing [Comment " bar"]]
   , "UnionType" `tup` [Package Unencapsulated "P" Nothing [Union "U" Nothing []]]
-  , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [("Integer","a"), ("String","b")]]]
+  , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [(ty "Integer","a"), (ty "String","b")]]]
   , "MComment" `tup` [ MComment "\nhej\npackage Foo\n"
                      , Package Unencapsulated "F" Nothing [MComment " end F; "]
                      , MComment "*\n * hej\n "]
@@ -26,12 +35,18 @@ parserExpected = [
                        , Import Unprotected "W"    Nothing       (Right ["a","b","cde"])
                        ]]
   , "EncapsulatedPackage" `tup` [Package Encapsulated "P" Nothing []]
-  , "PartialFunction" `tup` [PartFn "X" Nothing [Input ("Integer", "a"), Output ("Integer", "b")]]
+  , "PartialFunction" `tup` [PartFn "X" [] Nothing [
+                                Input (ty "Integer", "a")
+                              , Output (ty "Integer", "b")]]
   , "ReplaceableType" `tup` [Replaceable "Element"]
   , "Strings" `tup` [Package Unencapsulated "P" (Just "P doc string") [
-                      Function "f" (Just "f doc\n  string") [] []
+                      Function "f" [] (Just "f doc\n  string") [] []
                     , Union "U" (Just "U docstring") []
                     , Union "W" Nothing []
-                    , PartFn "F" (Just "F docstring") [Input ("String", "x")]
+                    , PartFn "F" [] (Just "F docstring") [Input (ty "String", "x")]
                     ]]
+  , "PolyType" `tup` [
+      Function "f" [ty "A"] Nothing [Input (Type "List" ["A"], "a"), Output (ty "A", "b")] []
+    , PartFn "f" [ty "A"] Nothing [Input (Type "List" ["A"], "a")]
+    ]
   ] where tup = (,)

@@ -5,10 +5,10 @@ import           Prelude   hiding (exp)
 import qualified Tokenizer as T
 
 data AST = Package Encapsulation Name (Maybe DocString) [AST]
-         | Function Name (Maybe DocString) [Param] [Stmt]
+         | Function Name [Type] (Maybe DocString) [Param] [Stmt]
          | Comment String  -- //
          | MComment String -- /* */
-         | PartFn Name (Maybe DocString) [Param]
+         | PartFn Name [Type] (Maybe DocString) [Param]
          | Union Name (Maybe DocString) [Record]
          | Import Protection Name (Maybe Name) (Either Wild [Name])
          | Replaceable Name
@@ -67,5 +67,7 @@ type VarDecl = (Type, Var)
 
 type DocString = String
 type Var = String
+data Type = Type Name [Name]
+  deriving (Eq, Show)
+
 type Name = String
-type Type = String

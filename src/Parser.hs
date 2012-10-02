@@ -64,6 +64,7 @@ p_ast (T.MComment s) = return $ MComment s
 p_ast T.Package = p_package T.Package
 p_ast T.Function = do
   name <- p_name
+  qs <- p_polytypes
   doc <- p_docstr
   params <- many T.isInputOutput p_param
   t_algorithm
@@ -71,16 +72,17 @@ p_ast T.Function = do
   t_end
   void p_name
   t_semi
-  return $ Function name doc params stmts
+  return $ Function name qs doc params stmts
 p_ast T.Partial = do
   t_function
   name <- p_name
+  qs <- p_polytypes
   doc <- p_docstr
   params <- many T.isInputOutput p_param
   t_end
   void p_name
   t_semi
-  return $ PartFn name doc params
+  return $ PartFn name qs doc params
 p_ast T.Union = do
   name <- p_name
   doc <- p_docstr
@@ -139,6 +141,19 @@ p_listContents (Just _) = do
   look >>= p_listContents >>= return . (el :)
 p_listContents Nothing = error "p_listContents unreachable"
 
+p_polytypes :: Parse [Type]
+p_polytypes =
+  look >>= \s -> case s of
+    Just T.Lt -> eat >> p_polytypes' >>= (\ts -> tok' (T.Gt) >> return ts)
+    _ -> return []
+  where
+    p_polytypes' :: Parse [Type]
+    p_polytypes' =
+      look >>= \s -> case s of
+        Just T.Gt -> return []
+        Just (T.W _) -> eat >>= p_type >>= \t -> (p_polytypes' >>= \ts -> return (t:ts))
+        _ -> throwErr $ ExpectedTok [T.Gt, T.W "<<type>>"]
+
 p_records :: Parse [Record]
 p_records =
   look >>= \s -> case s of
@@ -194,17 +209,34 @@ p_pat :: Parse Pat
 p_pat = t_word
 
 p_vardecl :: Token -> Parse VarDecl
-p_vardecl (T.W typ) = do
+p_vardecl n@(T.W _) = do
+  typ <- p_type n
   var <- p_name
   t_semi
   return (typ, var)
 p_vardecl _ = throwErr $ ExpectedTok [T.W "<<any>>"]
+
+p_type :: Token -> Parse Type
+p_type (T.W t) = do
+  qs <- (look >>= \s -> case s of
+    Just T.Lt -> eat >> p_polytype' >>= (\ts -> tok' T.Gt >> return ts)
+    _ -> return [])
+  return $ Type t qs
+  where
+    p_polytype' :: Parse [Name]
+    p_polytype' =
+      look >>= \s -> case s of
+        Just T.Gt -> return []
+        Just (T.W _) -> p_name >>= (\n -> p_polytype' >>= \ns -> return (n:ns))
+        _ -> throwErr $ ExpectedTok [T.Gt, T.W "<<any>>"]
+p_type _ = throwErr $ ExpectedTok [T.W "<<any>>"]
 
 p_name :: Parse Name
 p_name = t_word
 
 p_docstr :: Parse (Maybe String)
 p_docstr = option (T.isStr) t_str
+
 
 -- Tokens
 

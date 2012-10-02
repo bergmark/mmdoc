@@ -18,10 +18,12 @@ data Token = Algorithm
            | Encapsulated
            | End
            | Function
+           | Gt
            | Import
            | Input
            | ListEnd
            | ListStart
+           | Lt
            | MComment String
            | Match
            | Output
@@ -60,6 +62,8 @@ p_token = (char ';' *> return Semi)
             <|> char '.'                *> return Dot
             <|> char '{'                *> return ListStart
             <|> char '}'                *> return ListEnd
+            <|> char '<'                *> return Lt
+            <|> char '>'                *> return Gt
             <|> try (Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n")))
             <|> try (fmap MComment $ str "/*" *> manyTill (noneOf "_") (try (string "*/")))
             <|> try (str "algorithm"    *> return Algorithm)
