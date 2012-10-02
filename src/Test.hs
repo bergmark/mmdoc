@@ -36,7 +36,7 @@ tokenizerTests = do
 parserTests :: IO Test
 parserTests = do
   files <- fmap (map ("tests" </>) . sort . filter dotMo) $ getDirectoryContents "tests"
---  let files = map ("tests" </>) ["EncapsulatedPackage.mo"]
+--  let files = map ("tests" </>) ["Funcall.mo"]
   return $ testGroup "Tests" $ flip map files $ \file ->
     testCase file $ do
       let name = (reverse . drop 1 . dropWhile (/= '.') . reverse . drop 1 . dropWhile (/= '/')) file
@@ -49,7 +49,8 @@ parserTests = do
           (\toks -> do
             r <- P.parse toks
             case r of
-              Left (P.ParseError perr (P.ParseState { P.parseTokens = ts })) -> error . show $ (perr, take 3 ts)
+              Left (P.ParseError perr (P.ParseState { P.lastToken = lt, P.parseTokens = ts })) ->
+                error . show $ (perr, lt, take 3 ts)
               Right res -> assertEqual name (fromJust expected) res)
 
 printTests :: IO Test
@@ -74,5 +75,4 @@ main = do
   tokenizer <- tokenizerTests
   parser <- parserTests
   pr <- printTests
-  defaultMain [tokenizer, parser, pr]
-
+  defaultMain [tokenizer, pr, parser]

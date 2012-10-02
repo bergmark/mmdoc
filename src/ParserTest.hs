@@ -53,5 +53,6 @@ parserExpected = [
   , "Funcall" `tup` [Function "f" [] Nothing [] [
                       StmtExp (Funcall "f" [])
                     , Assign "x" (Funcall "f" [])
+                    , StmtExp (Funcall "g" [Funcall "f" [], EVar "x", EVar "y"])
                     ]]
   ] where tup = (,)

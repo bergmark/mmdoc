@@ -8,18 +8,18 @@ import           Control.Applicative hiding (many)
 import           Control.Monad
 import           Control.Monad.Error
 import           Control.Monad.State
+import           Data.Maybe
 import           Prelude             hiding (exp, pred)
 
 import           Tokenizer           (Token)
 import qualified Tokenizer           as T
 import           Types
 
-data ParseState = ParseState { parseAsts :: [AST], parseTokens :: [Token] }
+data ParseState = ParseState { parseAsts :: [AST], lastToken :: Maybe Token, parseTokens :: [Token] }
                 deriving Show
 
 parseState :: [Token] -> ParseState
-parseState ts = ParseState [] ts
-
+parseState ts = ParseState [] Nothing ts
 
 -- | Compile monad.
 newtype Parse a = Parse { unCompile :: StateT ParseState (ErrorT ParseError IO) a }
@@ -192,9 +192,22 @@ p_exp T.Match = do
   return $ Match [mvar] cases
 p_exp (T.W v) =
   look >>= \s -> case s of
-    Just T.ParenL -> tok' T.ParenL >> tok' T.ParenR >> return (Funcall v [])
+    Just T.ParenL -> do
+      tok' T.ParenL
+      args <- option (not . (== T.ParenR)) (p_expList =<< eat)
+      tok' T.ParenR
+      return $ Funcall v (fromMaybe [] args)
     _ -> return $ EVar v
-p_exp _ = throwErr $ ExpectedTok [T.Match]
+p_exp _ = throwErr $ ExpectedTok [T.Match, T.W "<<any>>"]
+
+p_expList :: Token -> Parse [Exp]
+p_expList t = do
+  e <- p_exp t
+  comma <- option (== T.Comma) t_comma
+  es <- case comma of
+    Just _ -> eat >>= p_expList
+    Nothing -> return []
+  return $ e:es
 
 p_match_case :: Token -> Parse Case
 p_match_case T.Case = do
@@ -300,10 +313,15 @@ look = do
     (t:_) -> return (Just t)
     _ -> throwErr $ ExpectedTok [T.EOF]
 
+lookIs :: Token -> Parse Bool
+lookIs t = look >>= \s -> return (case s of
+  Just x -> t == x
+  Nothing -> False)
+
 eat :: Parse Token
 eat = do
   t:ts <- gets parseTokens
-  modify (\s -> s { parseTokens = ts })
+  modify (\s -> s { parseTokens = ts, lastToken = Just t })
   return t
 
 skip :: Parse ()
