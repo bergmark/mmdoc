@@ -15,9 +15,9 @@ parserExpected = [
                              ,Input (ty "Integer","y")
                              ,Output (ty "Boolean","b1")
                              ,Output (ty "Boolean","b2")] []]]
-  , "FunctionStatements" `tup` [Package Unencapsulated "Package" Nothing [Function "f" [] Nothing [] [Assign "x" (EVar "y"),Assign "aoeu123" (EVar "aoeu123")]]]
+  , "FunctionStatements" `tup` [Package Unencapsulated "Package" Nothing [Function "f" [] Nothing [] [Assign ["x"] (EVar "y"),Assign ["aoeu123"] (EVar "aoeu123")]]]
   , "Match" `tup` [Package Unencapsulated "Package" Nothing
-                    [Function "f" [] Nothing [] [Assign "x" (Match ["y"] [("z",EVar "w")])]]]
+                    [Function "f" [] Nothing [] [Assign ["x"] (Match ["y"] [("z",EVar "w")])]]]
   , "Comment" `tup` [Comment " foo", Package Unencapsulated "Package" Nothing [Comment " bar"]]
   , "UnionType" `tup` [Package Unencapsulated "P" Nothing [Union "U" Nothing []]]
   , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [(ty "Integer","a"), (ty "String","b")]]]
@@ -52,15 +52,18 @@ parserExpected = [
   , "StandAloneStmt" `tup` [Function "f" [] Nothing [] [StmtExp (EVar "stmt")]]
   , "Funcall" `tup` [Function "f" [] Nothing [] [
                       StmtExp (Funcall "f" [])
-                    , Assign "x" (Funcall "f" [])
+                    , Assign ["x"] (Funcall "f" [])
                     , StmtExp (Funcall "g" [Funcall "f" [], EVar "x", EVar "y"])
                     ]]
   , "TypeAlias" `tup` [TypeAlias "X" "Y"]
-  , "Underscores" `tup` [Function "f" [] Nothing [] [Assign "_" (EVar "x")]]
+  , "Underscores" `tup` [Function "f" [] Nothing [] [Assign ["_"] (EVar "x")]]
   , "Operators" `tup` [Function "f" [] Nothing [] [
                         StmtExp (InfixApp "+&" (EVar "a") (EVar "b"))
                       , StmtExp (InfixApp "/" (EVar "c") (EVar "d"))
                       , StmtExp (InfixApp "*" (EVar "e") (EVar "f"))
                       , StmtExp (InfixApp "*" (EVar "e") (InfixApp "/" (EVar "g") (EVar "h")))
                       ]]
+  , "Tuples" `tup` [Function "f" [] Nothing [] [
+                     Assign ["x","y"] (Tuple [EVar "z",EVar "w"])
+                   ]]
   ] where tup = (,)

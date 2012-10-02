@@ -178,12 +178,30 @@ p_stmt l@(T.W lhs) =
       void $ eat
       exp <- p_exp =<< eat
       t_semi
-      return (Assign lhs exp)
+      return (Assign [lhs] exp)
     _ -> do
       exp <- p_exp l
       t_semi
       return (StmtExp exp)
-p_stmt _ = throwErr $ ExpectedTok [T.W "<<any>>"]
+p_stmt T.ParenL = do
+  lhs <- commaSep p_name T.ParenR
+  tok' T.ParenR
+  tok' (T.S ":=")
+  exp <- p_exp =<< eat
+  t_semi
+  return (Assign lhs exp)
+p_stmt _ = throwErr $ ExpectedTok [T.W "<<any>>", T.ParenL]
+
+commaSep :: Parse a -> Token -> Parse [a]
+commaSep pel endt = do
+  el <- pel
+  hi <- lookIs endt
+  if hi
+    then return [el]
+    else do
+      t_comma
+      els <- commaSep pel endt
+      return $ el : els
 
 p_exp :: Token -> Parse Exp
 p_exp T.Match = do
@@ -204,7 +222,11 @@ p_exp (T.W v) =
       e <- p_exp =<< eat
       return $ InfixApp op (EVar v) e
     _ -> return $ EVar v
-p_exp _ = throwErr $ ExpectedTok [T.Match, T.W "<<any>>"]
+p_exp T.ParenL = do
+  ts <- commaSep (eat >>= p_exp) T.ParenR
+  tok' T.ParenR
+  return (Tuple ts)
+p_exp _ = throwErr $ ExpectedTok [T.Match, T.W "<<any>>", T.ParenL]
 
 p_expList :: Token -> Parse [Exp]
 p_expList t = do
@@ -293,7 +315,7 @@ t_str = T.fromStr <$> token (ExpectedTok [T.Str "<<any>>"]) T.isStr
 
 t_s' :: Parse String
 t_s' = eat >>= \s -> case s of
-  T.S s -> return s
+  T.S s' -> return s'
   _ -> throwErr $ ExpectedTok [T.S "<<any>>"]
 
 t_s :: String -> Parse String

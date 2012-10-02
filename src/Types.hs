@@ -52,7 +52,7 @@ data Param = Input VarDecl
            | Output VarDecl
   deriving (Eq, Show)
 
-data Stmt = Assign Var Exp
+data Stmt = Assign [Var] Exp
           | StmtExp Exp
   deriving (Eq, Show)
 
@@ -62,6 +62,8 @@ data Exp = EVar Name
          | Match [Var] [Case]
          | Funcall Name [Exp]
          | InfixApp Op Exp Exp
+         | Tuple [Exp]
+         -- TODO List
   deriving (Eq, Show)
 
 type Pat = Var
