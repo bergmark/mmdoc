@@ -61,5 +61,6 @@ parserExpected = [
                         StmtExp (InfixApp "+&" (EVar "a") (EVar "b"))
                       , StmtExp (InfixApp "/" (EVar "c") (EVar "d"))
                       , StmtExp (InfixApp "*" (EVar "e") (EVar "f"))
+                      , StmtExp (InfixApp "*" (EVar "e") (InfixApp "/" (EVar "g") (EVar "h")))
                       ]]
   ] where tup = (,)
