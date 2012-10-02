@@ -124,22 +124,18 @@ p_package _ = throwErr $ ExpectedTok [T.Package]
 
 p_importVars :: Token -> Parse (Either Wild [Name])
 p_importVars (T.W "*") = return $ Left Wild
-p_importVars T.ListStart = do
-  l <- p_list T.ListStart
-  return $ Right l
+p_importVars T.ListStart = Right <$> (p_importVarsList =<< eat)
 p_importVars _ = throwErr $ ExpectedTok [T.W "*", T.ListStart]
 
-p_list :: Token -> Parse [Name]
-p_list T.ListStart = look >>= p_listContents
-p_list _ = throwErr $ ExpectedTok [T.ListStart]
-
-p_listContents :: Maybe Token -> Parse [Name]
-p_listContents (Just T.ListEnd) = t_listEnd >> return []
-p_listContents (Just _) = do
-  el <- p_name
-  void $ option (== T.Comma) t_comma
-  look >>= p_listContents >>= return . (el :)
-p_listContents Nothing = error "p_listContents unreachable"
+p_importVarsList :: Token -> Parse [Name]
+p_importVarsList T.ListEnd = return []
+p_importVarsList (T.W el) = do
+  c <- option (== T.Comma) t_comma
+  els <- case c of
+    Just _ -> eat >>= p_importVarsList
+    Nothing -> tok' T.ListEnd >> return []
+  return $ el : els
+p_importVarsList _ = throwErr $ ExpectedTok [T.ListEnd, T.W "<<any>>"]
 
 p_polytypes :: Parse [Type]
 p_polytypes =
