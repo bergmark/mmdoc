@@ -64,6 +64,7 @@ data Exp = EVar Name
          | Match [Var] [Case]
          | Funcall Name [Exp]
          | InfixApp Op Exp Exp
+         | UnaryApp Op Exp
          | Tuple [Exp]
          | Unit -- ()
          -- TODO List

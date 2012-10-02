@@ -81,5 +81,8 @@ parserExpected = [
                            , (EVar "z", [StmtExp (EVar "c"), StmtExp (EVar "d")])
                            ] (Just [StmtExp (EVar "e"), StmtExp (EVar "f")])
                           ]]
-
+  , "Integer" `tup` [func "f" [
+                      Assign ["x"] (InfixApp "+" (EVar "1") (EVar "2"))
+                    , Assign ["y"] (UnaryApp "-" (EVar "3"))
+                    ]]
   ] where tup = (,)

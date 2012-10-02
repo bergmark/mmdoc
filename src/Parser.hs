@@ -30,6 +30,8 @@ newtype Parse a = Parse { unCompile :: StateT ParseState (ErrorT ParseError IO) 
            , Functor
            , Applicative)
 
+type TParser a = Parser Token a
+
 data ParseError = ParseError PError ParseState
                   deriving Show
 
@@ -58,7 +60,7 @@ parseTop = do
 p_top :: Parse [AST]
 p_top = many isAstStart p_ast
 
-p_ast :: Token -> Parse AST
+p_ast :: TParser AST
 p_ast (T.Comment s) = return $ Comment s
 p_ast (T.MComment s) = return $ MComment s
 p_ast T.Package = p_package T.Package
@@ -117,7 +119,7 @@ p_ast T.Type = do
   return $ TypeAlias a b
 p_ast _ = throwErr $ UnsupportedAstToken
 
-p_package :: Token -> Parse AST
+p_package :: TParser AST
 p_package T.Package = do
   name <- p_name
   doc <- p_docstr
@@ -128,12 +130,12 @@ p_package T.Package = do
   return $ Package Unencapsulated name doc content
 p_package _ = throwErr $ ExpectedTok [T.Package]
 
-p_importVars :: Token -> Parse (Either Wild [Name])
+p_importVars :: TParser (Either Wild [Name])
 p_importVars (T.S "*") = return $ Left Wild
 p_importVars T.ListStart = Right <$> (p_importVarsList =<< eat)
 p_importVars _ = throwErr $ ExpectedTok [T.S "*", T.ListStart]
 
-p_importVarsList :: Token -> Parse [Name]
+p_importVarsList :: TParser [Name]
 p_importVarsList T.ListEnd = return []
 p_importVarsList (T.W el) = do
   c <- tokM T.Comma
@@ -143,7 +145,7 @@ p_importVarsList (T.W el) = do
   return $ el : els
 p_importVarsList _ = throwErr $ ExpectedTok [T.ListEnd, T.W "<<any>>"]
 
-p_polytypes :: Token -> Parse [Type]
+p_polytypes :: TParser [Type]
 p_polytypes T.Lt = eat >>= p_polytypes
 p_polytypes T.Gt = return []
 p_polytypes w@(T.W _) = do
@@ -152,7 +154,7 @@ p_polytypes w@(T.W _) = do
   return (t:ts)
 p_polytypes _ = throwErr $ ExpectedTok [T.Lt, T.Gt, T.W "<<type>>"]
 
-p_record :: Token -> Parse Record
+p_record :: TParser Record
 p_record T.Record = do
   name <- p_name
   vardecls <- many T.isW p_vardecl
@@ -162,12 +164,12 @@ p_record T.Record = do
   return $ Record name vardecls
 p_record _ = throwErr (ExpectedTok [T.Record])
 
-p_param :: Token -> Parse Param
+p_param :: TParser Param
 p_param T.Input = Input <$> (eat >>= p_vardecl)
 p_param T.Output = Output <$> (eat >>= p_vardecl)
 p_param _ = throwErr $ ExpectedTok [T.Input, T.Output]
 
-p_stmt :: Token -> Parse Stmt
+p_stmt :: TParser Stmt
 p_stmt l@(T.W lhs) =
   look >>= \s -> case s of
     Just (T.S ":=") -> do
@@ -212,7 +214,7 @@ commaSep pel endt = do
       els <- commaSep pel endt
       return $ el : els
 
-p_exp :: Token -> Parse Exp
+p_exp :: TParser Exp
 p_exp T.Match = do
   mvar <- p_name
   cases <- many (== T.Case) p_match_case
@@ -238,9 +240,12 @@ p_exp T.ParenL = do
       ts <- commaSep (eat >>= p_exp) T.ParenR
       tok' T.ParenR
       return (Tuple ts)
-p_exp _ = throwErr $ ExpectedTok [T.Match, T.W "<<any>>", T.ParenL]
+p_exp (T.S "-") = do
+  e <- eat >>= p_exp
+  return $ UnaryApp "-" e
+p_exp _ = throwErr $ ExpectedTok [T.Match, T.W "<<any>>", T.ParenL,T.S "-"]
 
-p_expList :: Token -> Parse [Exp]
+p_expList :: TParser [Exp]
 p_expList t = do
   e <- p_exp t
   comma <- tokM T.Comma
@@ -249,7 +254,7 @@ p_expList t = do
     Nothing -> return []
   return $ e:es
 
-p_match_case :: Token -> Parse Case
+p_match_case :: TParser Case
 p_match_case T.Case = do
   pat <- eat >>= p_pat
   tok' T.Then
@@ -258,10 +263,10 @@ p_match_case T.Case = do
   return $ Case pat exp
 p_match_case _ = throwErr $ ExpectedTok [T.Case]
 
-p_pat :: Token -> Parse Pat
+p_pat :: TParser Pat
 p_pat = p_exp
 
-p_vardecl :: Token -> Parse VarDecl
+p_vardecl :: TParser VarDecl
 p_vardecl n@(T.W _) = do
   typ <- p_type n
   var <- p_name
@@ -269,7 +274,7 @@ p_vardecl n@(T.W _) = do
   return (typ, var)
 p_vardecl _ = throwErr $ ExpectedTok [T.W "<<any>>"]
 
-p_type :: Token -> Parse Type
+p_type :: TParser Type
 p_type (T.W t) = do
   qs <- optionWith [] (== T.Lt) (eat >>= p_polytypes)
   return $ Type t qs
@@ -311,6 +316,8 @@ t_w s = T.fromW <$> tok (T.W s)
 
 -- General parsing
 
+type Parser t a = t -> Parse a
+
 throwErr :: PError -> Parse a
 throwErr perr = do
   s <- gets id
@@ -324,7 +331,7 @@ look = do
     (t:_) -> return (Just t)
     _ -> throwErr $ ExpectedTok [T.EOF]
 
-lookIs :: Token -> Parse Bool
+lookIs :: TParser Bool
 lookIs t = look >>= \s -> return (case s of
   Just x -> t == x
   Nothing -> False)
@@ -345,16 +352,16 @@ token err tokP = do
     Just t | tokP t -> eat >> return t
     _ -> throwErr err
 
-tok :: Token -> Parse Token
+tok :: TParser Token
 tok t = token (ExpectedTok [t]) (== t)
 
-tok' :: Token -> Parse ()
+tok' :: TParser ()
 tok' = void . tok
 
-tokM :: Token -> Parse (Maybe Token)
+tokM :: TParser (Maybe Token)
 tokM t = option (== t) (tok t)
 
-many :: (Token -> Bool) -> (Token -> Parse a) -> Parse [a]
+many :: (Token -> Bool) -> (TParser a) -> Parse [a]
 many pred p =
   look >>= \s -> case s of
     Just v | pred v -> eat >>= p >>= (\res -> (res :) <$> many pred p)
