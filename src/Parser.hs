@@ -271,17 +271,8 @@ p_vardecl _ = throwErr $ ExpectedTok [T.W "<<any>>"]
 
 p_type :: Token -> Parse Type
 p_type (T.W t) = do
-  qs <- (look >>= \s -> case s of
-    Just T.Lt -> eat >> p_polytype' >>= (\ts -> tok' T.Gt >> return ts)
-    _ -> return [])
+  qs <- fromMaybe [] <$> option (== T.Lt) (eat >>= p_polytypes)
   return $ Type t qs
-  where
-    p_polytype' :: Parse [Name]
-    p_polytype' =
-      look >>= \s -> case s of
-        Just T.Gt -> return []
-        Just (T.W _) -> p_name >>= (\n -> p_polytype' >>= \ns -> return (n:ns))
-        _ -> throwErr $ ExpectedTok [T.Gt, T.W "<<any>>"]
 p_type _ = throwErr $ ExpectedTok [T.W "<<any>>"]
 
 p_name :: Parse Name

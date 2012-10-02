@@ -53,8 +53,8 @@ parserExpected = [
                     , PartFn "F" [] (Just "F docstring") [Input (ty "String", "x")]
                     ]]
   , "PolyType" `tup` [
-      Function "f" [ty "A"] Nothing [Input (Type "List" ["A"], "a"), Output (ty "A", "b")] []
-    , PartFn "f" [ty "A"] Nothing [Input (Type "List" ["A"], "a")]
+      Function "f" [ty "A"] Nothing [Input (Type "List" [ty "A"], "a"), Output (ty "A", "b")] []
+    , PartFn "f" [ty "A"] Nothing [Input (Type "List" [ty "A"], "a")]
     ]
   , "StandAloneStmt" `tup` [Function "f" [] Nothing [] [StmtExp (EVar "stmt")]]
   , "Funcall" `tup` [Function "f" [] Nothing [] [

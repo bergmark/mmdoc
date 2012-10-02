@@ -78,7 +78,7 @@ type VarDecl = (Type, Var)
 
 type DocString = String
 type Var = String
-data Type = Type Name [Name]
+data Type = Type Name [Type]
   deriving (Eq, Show)
 type Op = String
 
