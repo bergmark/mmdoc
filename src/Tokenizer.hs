@@ -19,6 +19,7 @@ data Token = Algorithm
            | End
            | Function
            | Gt
+           | If
            | Import
            | Input
            | ListEnd
@@ -82,6 +83,7 @@ p_token =
     <|> try (str "encapsulated" *> return Encapsulated)
     <|> try (str "end"          *> return End)
     <|> try (str "function"     *> return Function)
+    <|> try (str "if"           *> return If)
     <|> try (str "import"       *> return Import)
     <|> try (str "input"        *> return Input)
     <|> try (str "match"        *> return Match)

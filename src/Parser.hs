@@ -188,9 +188,17 @@ p_stmt T.ParenL = do
   tok' T.ParenR
   tok' (T.S ":=")
   exp <- p_exp =<< eat
-  t_semi
+  tok' T.Semi
   return (Assign lhs exp)
-p_stmt _ = throwErr $ ExpectedTok [T.W "<<any>>", T.ParenL]
+p_stmt T.If = do
+  pred <- eat >>= p_exp
+  tok' T.Then
+  stmts <- many (/= T.End) p_stmt
+  tok' T.End
+  tok' T.If
+  tok' T.Semi
+  return $ If pred stmts
+p_stmt _ = throwErr $ ExpectedTok [T.W "<<any>>", T.ParenL, T.If]
 
 commaSep :: Parse a -> Token -> Parse [a]
 commaSep pel endt = do
