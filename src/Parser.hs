@@ -199,6 +199,10 @@ p_exp (T.W v) =
       args <- option (not . (== T.ParenR)) (p_expList =<< eat)
       tok' T.ParenR
       return $ Funcall v (fromMaybe [] args)
+    Just (T.S _) -> do
+      op <- t_s'
+      e <- p_exp =<< eat
+      return $ InfixApp op (EVar v) e
     _ -> return $ EVar v
 p_exp _ = throwErr $ ExpectedTok [T.Match, T.W "<<any>>"]
 
@@ -286,6 +290,11 @@ t_word = T.fromW <$> token (ExpectedTok [T.W "<<any>>"]) T.isW
 
 t_str :: Parse String
 t_str = T.fromStr <$> token (ExpectedTok [T.Str "<<any>>"]) T.isStr
+
+t_s' :: Parse String
+t_s' = eat >>= \s -> case s of
+  T.S s -> return s
+  _ -> throwErr $ ExpectedTok [T.S "<<any>>"]
 
 t_s :: String -> Parse String
 t_s s = T.fromS <$> tok (T.S s)
