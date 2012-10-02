@@ -67,29 +67,29 @@ p_ast T.Function = do
   qs <- p_polytypes
   doc <- p_docstr
   params <- many T.isInputOutput p_param
-  t_algorithm
+  tok' T.Algorithm
   stmts <- many (/= T.End) p_stmt
-  t_end
+  tok' T.End
   void p_name
-  t_semi
+  tok' T.Semi
   return $ Function name qs doc params stmts
 p_ast T.Partial = do
-  t_function
+  tok' T.Function
   name <- p_name
   qs <- p_polytypes
   doc <- p_docstr
   params <- many T.isInputOutput p_param
-  t_end
+  tok' T.End
   void p_name
-  t_semi
+  tok' T.Semi
   return $ PartFn name qs doc params
 p_ast T.Union = do
   name <- p_name
   doc <- p_docstr
   recs <- many (== T.Record) p_record
-  t_end
+  tok' T.End
   void $ p_name
-  t_semi
+  tok' T.Semi
   return $ Union name doc recs
 p_ast T.Protected = do
   eat >>= p_ast >>= return . protectAst
@@ -100,20 +100,20 @@ p_ast (T.W "replaceable") = do
   name <- p_name
   void $ t_w "subtypeof"
   void $ t_w "Any"
-  t_semi
+  tok' T.Semi
   return $ Replaceable name
 p_ast T.Import = do
-  protection <- maybe Unprotected (const Protected) <$> option (== T.Protected) t_protected
+  protection <- maybe Unprotected (const Protected) <$> option (== T.Protected) (tok' T.Protected)
   name <- p_name
   name' <- option (== T.S "=") (token (ExpectedTok [T.S "="]) (== T.S "=") >> p_name)
-  imports <- option (== T.Dot) (t_dot >> eat >>= p_importVars)
-  t_semi
+  imports <- option (== T.Dot) (tok' T.Dot >> eat >>= p_importVars)
+  tok' T.Semi
   return $ Import protection name name' (maybe (Left Wild) id imports)
 p_ast T.Type = do
   a <- p_name
   void $ t_s "="
   b <- p_name
-  t_semi
+  tok' T.Semi
   return $ TypeAlias a b
 p_ast _ = throwErr $ UnsupportedAstToken
 
@@ -122,9 +122,9 @@ p_package T.Package = do
   name <- p_name
   doc <- p_docstr
   content <- p_top
-  t_end
+  tok' T.End
   void p_name
-  t_semi
+  tok' T.Semi
   return $ Package Unencapsulated name doc content
 p_package _ = throwErr $ ExpectedTok [T.Package]
 
@@ -136,7 +136,7 @@ p_importVars _ = throwErr $ ExpectedTok [T.S "*", T.ListStart]
 p_importVarsList :: Token -> Parse [Name]
 p_importVarsList T.ListEnd = return []
 p_importVarsList (T.W el) = do
-  c <- option (== T.Comma) t_comma
+  c <- option (== T.Comma) (tok' T.Comma)
   els <- case c of
     Just _ -> eat >>= p_importVarsList
     Nothing -> tok' T.ListEnd >> return []
@@ -160,9 +160,9 @@ p_record :: Token -> Parse Record
 p_record T.Record = do
   name <- p_name
   vardecls <- many T.isW p_vardecl
-  t_end
+  tok' T.End
   void $ p_name
-  t_semi
+  tok' T.Semi
   return $ Record name vardecls
 p_record _ = throwErr (ExpectedTok [T.Record])
 
@@ -177,11 +177,11 @@ p_stmt l@(T.W lhs) =
     Just (T.S ":=") -> do
       void $ eat
       exp <- p_exp =<< eat
-      t_semi
+      tok' T.Semi
       return (Assign [lhs] exp)
     _ -> do
       exp <- p_exp l
-      t_semi
+      tok' T.Semi
       return (StmtExp exp)
 p_stmt T.ParenL = do
   lhs <- commaSep p_name T.ParenR
@@ -212,7 +212,7 @@ commaSep pel endt = do
   if hi
     then return [el]
     else do
-      t_comma
+      tok' T.Comma
       els <- commaSep pel endt
       return $ el : els
 
@@ -220,8 +220,8 @@ p_exp :: Token -> Parse Exp
 p_exp T.Match = do
   mvar <- p_name
   cases <- many (== T.Case) p_match_case
-  t_end
-  t_match
+  tok' T.End
+  tok' T.Match
   return $ Match [mvar] cases
 p_exp (T.W v) =
   look >>= \s -> case s of
@@ -247,7 +247,7 @@ p_exp _ = throwErr $ ExpectedTok [T.Match, T.W "<<any>>", T.ParenL]
 p_expList :: Token -> Parse [Exp]
 p_expList t = do
   e <- p_exp t
-  comma <- option (== T.Comma) t_comma
+  comma <- option (== T.Comma) (tok' T.Comma)
   es <- case comma of
     Just _ -> eat >>= p_expList
     Nothing -> return []
@@ -258,7 +258,7 @@ p_match_case T.Case = do
   pat <- p_pat
   tok' T.Then
   exp <- eat >>= p_exp
-  t_semi
+  tok' T.Semi
   return $ Case pat exp
 p_match_case _ = throwErr $ ExpectedTok [T.Case]
 
@@ -269,7 +269,7 @@ p_vardecl :: Token -> Parse VarDecl
 p_vardecl n@(T.W _) = do
   typ <- p_type n
   var <- p_name
-  t_semi
+  tok' T.Semi
   return (typ, var)
 p_vardecl _ = throwErr $ ExpectedTok [T.W "<<any>>"]
 
@@ -302,26 +302,8 @@ t_eof = eat >>= \s -> case s of
   T.EOF -> return ()
   _ -> throwErr $ ExpectedTok [T.EOF]
 
-t_comma :: Parse ()
-t_comma = tok' T.Comma
-
-t_listEnd :: Parse ()
-t_listEnd = tok' T.ListEnd
-
-t_dot :: Parse ()
-t_dot = tok' T.Dot
-
 t_wild :: Parse ()
 t_wild = tok' (T.W "*")
-
-t_protected :: Parse ()
-t_protected = tok' T.Protected
-
-t_match :: Parse ()
-t_match = tok' T.Match
-
-t_end :: Parse ()
-t_end = tok' T.End
 
 t_word :: Parse String
 t_word = T.fromW <$> token (ExpectedTok [T.W "<<any>>"]) T.isW
@@ -339,16 +321,6 @@ t_s s = T.fromS <$> tok (T.S s)
 
 t_w :: String -> Parse String
 t_w s = T.fromW <$> tok (T.W s)
-
-t_semi :: Parse ()
-t_semi = tok' T.Semi
-
-t_algorithm :: Parse ()
-t_algorithm = tok' T.Algorithm
-
-t_function :: Parse ()
-t_function = tok' T.Function
-
 
 -- General parsing
 
