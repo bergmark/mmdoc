@@ -54,7 +54,7 @@ data Param = Input VarDecl
 
 data Stmt = Assign [Var] Exp
           | StmtExp Exp
-          | If Exp [Stmt]
+          | If [(Exp,[Stmt])] (Maybe [Stmt])
   deriving (Eq, Show)
 
 data Case = Case Pat Exp

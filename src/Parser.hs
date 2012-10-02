@@ -191,14 +191,19 @@ p_stmt T.ParenL = do
   tok' T.Semi
   return (Assign lhs exp)
 p_stmt T.If = do
+  iff <- p_if'
+  eifs <- many (== T.Elseif) (const p_if')
+  elsestmt <- option (== T.Else) (eat >> eat >>= p_stmt)
+  tok' T.End >> tok' T.If >> tok' T.Semi
+  return $ If (iff : eifs) ((:[]) <$> elsestmt)
+p_stmt _ = throwErr $ ExpectedTok [T.W "<<any>>", T.ParenL, T.If]
+
+p_if' :: Parse (Exp, [Stmt])
+p_if' = do
   pred <- eat >>= p_exp
   tok' T.Then
-  stmts <- many (/= T.End) p_stmt
-  tok' T.End
-  tok' T.If
-  tok' T.Semi
-  return $ If pred stmts
-p_stmt _ = throwErr $ ExpectedTok [T.W "<<any>>", T.ParenL, T.If]
+  stmts <- many (\v -> v /= T.End && v /= T.Elseif && v /= T.Else) p_stmt
+  return (pred, stmts)
 
 commaSep :: Parse a -> Token -> Parse [a]
 commaSep pel endt = do

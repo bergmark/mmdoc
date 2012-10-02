@@ -15,6 +15,8 @@ data Token = Algorithm
            | Comma
            | Comment String
            | Dot -- .
+           | Else
+           | Elseif
            | Encapsulated
            | End
            | Function
@@ -81,6 +83,8 @@ p_token =
     <|> try (str "algorithm"    *> return Algorithm)
     <|> try (str "case"         *> return Case)
     <|> try (str "encapsulated" *> return Encapsulated)
+    <|> try (str "elseif"       *> return Elseif)
+    <|> try (str "else"         *> return Else)
     <|> try (str "end"          *> return End)
     <|> try (str "function"     *> return Function)
     <|> try (str "if"           *> return If)

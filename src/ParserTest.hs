@@ -74,6 +74,12 @@ parserExpected = [
                      Assign ["x","y"] (Tuple [EVar "z",EVar "w"])
                    ]]
   , "Unit" `tup` [func "f" [Assign ["x"] Unit]]
-  , "IfStmt" `tup` [func "f" [If (InfixApp "==" (EVar "x") (EVar "y")) [Assign ["a"] (EVar "b")]]]
+  , "IfStmt" `tup` [func "f" [If [(InfixApp "==" (EVar "x") (EVar "y"), [Assign ["a"] (EVar "b")])] Nothing]]
+  , "IfElseifElse" `tup` [func "f" [
+                           If [
+                             (InfixApp "==" (EVar "x") (EVar "y"), [Assign ["a"] (EVar "b")])
+                           , (EVar "z", [StmtExp (EVar "c"), StmtExp (EVar "d")])
+                           ] (Just [StmtExp (EVar "e")])
+                          ]]
 
   ] where tup = (,)
