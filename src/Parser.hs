@@ -103,7 +103,7 @@ p_ast (T.W "replaceable") = do
   tok' T.Semi
   return $ Replaceable name
 p_ast T.Import = do
-  protection <- maybe Unprotected (const Protected) <$> option (== T.Protected) (tok' T.Protected)
+  protection <- maybe Unprotected (const Protected) <$> tokM T.Protected
   name <- p_name
   name' <- option (== T.S "=") (token (ExpectedTok [T.S "="]) (== T.S "=") >> p_name)
   imports <- option (== T.Dot) (tok' T.Dot >> eat >>= p_importVars)
@@ -136,7 +136,7 @@ p_importVars _ = throwErr $ ExpectedTok [T.S "*", T.ListStart]
 p_importVarsList :: Token -> Parse [Name]
 p_importVarsList T.ListEnd = return []
 p_importVarsList (T.W el) = do
-  c <- option (== T.Comma) (tok' T.Comma)
+  c <- tokM T.Comma
   els <- case c of
     Just _ -> eat >>= p_importVarsList
     Nothing -> tok' T.ListEnd >> return []
@@ -227,7 +227,7 @@ p_exp (T.W v) =
   look >>= \s -> case s of
     Just T.ParenL -> do
       tok' T.ParenL
-      args <- option (not . (== T.ParenR)) (p_expList =<< eat)
+      args <- option (not . (== T.ParenR)) (eat >>= p_expList)
       tok' T.ParenR
       return $ Funcall v (fromMaybe [] args)
     Just (T.S _) -> do
@@ -247,7 +247,7 @@ p_exp _ = throwErr $ ExpectedTok [T.Match, T.W "<<any>>", T.ParenL]
 p_expList :: Token -> Parse [Exp]
 p_expList t = do
   e <- p_exp t
-  comma <- option (== T.Comma) (tok' T.Comma)
+  comma <- tokM T.Comma
   es <- case comma of
     Just _ -> eat >>= p_expList
     Nothing -> return []
@@ -363,6 +363,9 @@ tok t = token (ExpectedTok [t]) (== t)
 
 tok' :: Token -> Parse ()
 tok' = void . tok
+
+tokM :: Token -> Parse (Maybe Token)
+tokM t = option (== t) (tok t)
 
 many :: (Token -> Bool) -> (Token -> Parse a) -> Parse [a]
 many pred p =
