@@ -56,7 +56,8 @@ data Stmt = Assign [Var] Exp
           | StmtExp Exp
   deriving (Eq, Show)
 
-type Case = (Pat, Exp)
+data Case = Case Pat Exp
+  deriving (Eq, Show)
 
 data Exp = EVar Name
          | Match [Var] [Case]
@@ -66,7 +67,7 @@ data Exp = EVar Name
          -- TODO List
   deriving (Eq, Show)
 
-type Pat = Var
+type Pat = Exp
 
 data Record = Record Name [VarDecl]
   deriving (Eq, Show)

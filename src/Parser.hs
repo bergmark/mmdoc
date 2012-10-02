@@ -243,11 +243,11 @@ p_match_case T.Case = do
   tok' T.Then
   exp <- eat >>= p_exp
   t_semi
-  return (pat, exp)
+  return $ Case pat exp
 p_match_case _ = throwErr $ ExpectedTok [T.Case]
 
 p_pat :: Parse Pat
-p_pat = t_word
+p_pat = eat >>= p_exp
 
 p_vardecl :: Token -> Parse VarDecl
 p_vardecl n@(T.W _) = do

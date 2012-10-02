@@ -5,6 +5,9 @@ import           Types
 ty :: String -> Type
 ty s = Type s []
 
+func :: String -> [Stmt] -> AST
+func n s = Function n [] Nothing [] s
+
 parserExpected :: [(String, [AST])]
 parserExpected = [
     "Package" `tup` [Package Unencapsulated "Package" Nothing []]
@@ -17,7 +20,11 @@ parserExpected = [
                              ,Output (ty "Boolean","b2")] []]]
   , "FunctionStatements" `tup` [Package Unencapsulated "Package" Nothing [Function "f" [] Nothing [] [Assign ["x"] (EVar "y"),Assign ["aoeu123"] (EVar "aoeu123")]]]
   , "Match" `tup` [Package Unencapsulated "Package" Nothing
-                    [Function "f" [] Nothing [] [Assign ["x"] (Match ["y"] [("z",EVar "w")])]]]
+                    [func "f" [
+                      Assign ["x"] (Match ["y"] [Case (EVar "z") (EVar "w")])]]]
+  , "MatchPats" `tup` [func "f" [
+                        Assign ["res"] (Match ["x"] [Case (Tuple [EVar "_", EVar "_"]) (EVar "a")])
+                      ]]
   , "Comment" `tup` [Comment " foo", Package Unencapsulated "Package" Nothing [Comment " bar"]]
   , "UnionType" `tup` [Package Unencapsulated "P" Nothing [Union "U" Nothing []]]
   , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [(ty "Integer","a"), (ty "String","b")]]]
