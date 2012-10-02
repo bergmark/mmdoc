@@ -64,7 +64,7 @@ p_ast (T.MComment s) = return $ MComment s
 p_ast T.Package = p_package T.Package
 p_ast T.Function = do
   name <- p_name
-  qs <- p_polytypes
+  qs <- fromMaybe [] <$> option (== T.Lt) (eat >>= p_polytypes)
   doc <- p_docstr
   params <- many T.isInputOutput p_param
   tok' T.Algorithm
@@ -76,7 +76,7 @@ p_ast T.Function = do
 p_ast T.Partial = do
   tok' T.Function
   name <- p_name
-  qs <- p_polytypes
+  qs <- fromMaybe [] <$> option (== T.Lt) (eat >>= p_polytypes)
   doc <- p_docstr
   params <- many T.isInputOutput p_param
   tok' T.End
@@ -143,18 +143,14 @@ p_importVarsList (T.W el) = do
   return $ el : els
 p_importVarsList _ = throwErr $ ExpectedTok [T.ListEnd, T.W "<<any>>"]
 
-p_polytypes :: Parse [Type]
-p_polytypes =
-  look >>= \s -> case s of
-    Just T.Lt -> eat >> p_polytypes' >>= (\ts -> tok' (T.Gt) >> return ts)
-    _ -> return []
-  where
-    p_polytypes' :: Parse [Type]
-    p_polytypes' =
-      look >>= \s -> case s of
-        Just T.Gt -> return []
-        Just (T.W _) -> eat >>= p_type >>= \t -> (p_polytypes' >>= \ts -> return (t:ts))
-        _ -> throwErr $ ExpectedTok [T.Gt, T.W "<<type>>"]
+p_polytypes :: Token -> Parse [Type]
+p_polytypes T.Lt = eat >>= p_polytypes
+p_polytypes T.Gt = return []
+p_polytypes w@(T.W _) = do
+  t <- p_type w
+  ts <- eat >>= p_polytypes
+  return (t:ts)
+p_polytypes _ = throwErr $ ExpectedTok [T.Lt, T.Gt, T.W "<<type>>"]
 
 p_record :: Token -> Parse Record
 p_record T.Record = do
@@ -255,15 +251,15 @@ p_expList t = do
 
 p_match_case :: Token -> Parse Case
 p_match_case T.Case = do
-  pat <- p_pat
+  pat <- eat >>= p_pat
   tok' T.Then
   exp <- eat >>= p_exp
   tok' T.Semi
   return $ Case pat exp
 p_match_case _ = throwErr $ ExpectedTok [T.Case]
 
-p_pat :: Parse Pat
-p_pat = eat >>= p_exp
+p_pat :: Token -> Parse Pat
+p_pat = p_exp
 
 p_vardecl :: Token -> Parse VarDecl
 p_vardecl n@(T.W _) = do
