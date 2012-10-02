@@ -55,4 +55,5 @@ parserExpected = [
                     , Assign "x" (Funcall "f" [])
                     , StmtExp (Funcall "g" [Funcall "f" [], EVar "x", EVar "y"])
                     ]]
+  , "TypeAlias" `tup` [TypeAlias "X" "Y"]
   ] where tup = (,)

@@ -35,6 +35,7 @@ data Token = Algorithm
            | Record
            | Semi -- ;
            | Then
+           | Type
            | Union
 
            | Str String
@@ -85,6 +86,7 @@ p_token =
     <|> try (str "protected"    *> return Protected)
     <|> try (str "record"       *> return Record)
     <|> try (str "then"         *> return Then)
+    <|> try (str "type"         *> return Type)
     <|> try (str "uniontype"    *> return Union)
     <|> Str <$> between (char '"') (char '"') (many $ noneOf "\"")
     <|> W <$> many1 (choice [letter, digit, oneOf ":=*"])

@@ -96,7 +96,7 @@ p_ast T.Protected = do
 p_ast T.Encapsulated = do
   eat >>= p_package >>= return . encapsulateAst
 p_ast (T.W "replaceable") = do
-  void $ t_w "type"
+  tok' T.Type
   name <- p_name
   void $ t_w "subtypeof"
   void $ t_w "Any"
@@ -109,6 +109,12 @@ p_ast T.Import = do
   imports <- option (== T.Dot) (t_dot >> eat >>= p_importVars)
   t_semi
   return $ Import protection name name' (maybe (Left Wild) id imports)
+p_ast T.Type = do
+  a <- p_name
+  void $ t_w "="
+  b <- p_name
+  t_semi
+  return $ TypeAlias a b
 p_ast _ = throwErr $ UnsupportedAstToken
 
 p_package :: Token -> Parse AST

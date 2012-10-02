@@ -43,6 +43,7 @@ instance Print AST where
   pr (Import Unprotected n Nothing vs)   = "import " ++ pr n ++ pr_importList  vs ++ ";"
   pr (Import Unprotected n (Just ln) vs) = "import " ++ pr n ++ " = " ++ pr ln ++ pr_importList vs ++ ";"
   pr (Replaceable n) = "replaceable type " ++ pr n ++ " subtypeof Any;"
+  pr (TypeAlias a b) = "type " ++ pr a ++ " = " ++ pr b ++ ";"
 
 pr_importList :: Either Wild [Name] -> String
 pr_importList (Left Wild) = ".*"

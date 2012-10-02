@@ -4,14 +4,16 @@ import           Prelude   hiding (exp)
 
 import qualified Tokenizer as T
 
-data AST = Package Encapsulation Name (Maybe DocString) [AST]
+data AST =
+           Comment String  -- //
          | Function Name [Type] (Maybe DocString) [Param] [Stmt]
-         | Comment String  -- //
-         | MComment String -- /* */
-         | PartFn Name [Type] (Maybe DocString) [Param]
-         | Union Name (Maybe DocString) [Record]
          | Import Protection Name (Maybe Name) (Either Wild [Name])
+         | MComment String -- /* */
+         | Package Encapsulation Name (Maybe DocString) [AST]
+         | PartFn Name [Type] (Maybe DocString) [Param]
          | Replaceable Name
+         | TypeAlias Name Name
+         | Union Name (Maybe DocString) [Record]
   deriving (Eq, Show)
 
 isAstStart :: T.Token -> Bool
@@ -24,6 +26,7 @@ isAstStart T.Import = True
 isAstStart T.Protected = True
 isAstStart T.Encapsulated = True
 isAstStart T.Partial = True
+isAstStart T.Type = True
 isAstStart (T.W "replaceable") = True
 isAstStart _ = False
 
