@@ -105,13 +105,13 @@ p_ast (T.W "replaceable") = do
 p_ast T.Import = do
   protection <- maybe Unprotected (const Protected) <$> option (== T.Protected) t_protected
   name <- p_name
-  name' <- option (== T.W "=") (token (ExpectedTok [T.W "="]) (== T.W "=") >> p_name)
+  name' <- option (== T.S "=") (token (ExpectedTok [T.S "="]) (== T.S "=") >> p_name)
   imports <- option (== T.Dot) (t_dot >> eat >>= p_importVars)
   t_semi
   return $ Import protection name name' (maybe (Left Wild) id imports)
 p_ast T.Type = do
   a <- p_name
-  void $ t_w "="
+  void $ t_s "="
   b <- p_name
   t_semi
   return $ TypeAlias a b
@@ -129,9 +129,9 @@ p_package T.Package = do
 p_package _ = throwErr $ ExpectedTok [T.Package]
 
 p_importVars :: Token -> Parse (Either Wild [Name])
-p_importVars (T.W "*") = return $ Left Wild
+p_importVars (T.S "*") = return $ Left Wild
 p_importVars T.ListStart = Right <$> (p_importVarsList =<< eat)
-p_importVars _ = throwErr $ ExpectedTok [T.W "*", T.ListStart]
+p_importVars _ = throwErr $ ExpectedTok [T.S "*", T.ListStart]
 
 p_importVarsList :: Token -> Parse [Name]
 p_importVarsList T.ListEnd = return []
@@ -174,7 +174,7 @@ p_param _ = throwErr $ ExpectedTok [T.Input, T.Output]
 p_stmt :: Token -> Parse Stmt
 p_stmt l@(T.W lhs) =
   look >>= \s -> case s of
-    Just (T.W ":=") -> do
+    Just (T.S ":=") -> do
       void $ eat
       exp <- p_exp =<< eat
       t_semi
@@ -286,6 +286,9 @@ t_word = T.fromW <$> token (ExpectedTok [T.W "<<any>>"]) T.isW
 
 t_str :: Parse String
 t_str = T.fromStr <$> token (ExpectedTok [T.Str "<<any>>"]) T.isStr
+
+t_s :: String -> Parse String
+t_s s = T.fromS <$> tok (T.S s)
 
 t_w :: String -> Parse String
 t_w s = T.fromW <$> tok (T.W s)

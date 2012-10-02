@@ -39,7 +39,8 @@ data Token = Algorithm
            | Union
 
            | Str String
-           | W String
+           | S String -- Symbol
+           | W String -- Word
            | EOF
              deriving (Eq, Show)
 
@@ -49,6 +50,8 @@ isStr (Str _) = True
 isStr _ = False
 fromW (W s) = s
 fromW _ = error "fromW"
+fromS (S s) = s
+fromS _ = error "fromS"
 fromStr (Str s) = s
 fromStr _ = error "fromStr"
 isInputOutput p = Input == p || Output == p
@@ -89,4 +92,5 @@ p_token =
     <|> try (str "type"         *> return Type)
     <|> try (str "uniontype"    *> return Union)
     <|> Str <$> between (char '"') (char '"') (many $ noneOf "\"")
-    <|> W <$> many1 (choice [letter, digit, oneOf ":=*_"])
+    <|> S <$> many1 (oneOf "+&*+:=/")
+    <|> W <$> many1 (letter <|> digit <|> char '_')

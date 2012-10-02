@@ -61,6 +61,7 @@ type Case = (Pat, Exp)
 data Exp = EVar Name
          | Match [Var] [Case]
          | Funcall Name [Exp]
+         | InfixApp Op Exp Exp
   deriving (Eq, Show)
 
 type Pat = Var
@@ -74,5 +75,6 @@ type DocString = String
 type Var = String
 data Type = Type Name [Name]
   deriving (Eq, Show)
+type Op = String
 
 type Name = String

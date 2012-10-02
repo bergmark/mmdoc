@@ -57,4 +57,9 @@ parserExpected = [
                     ]]
   , "TypeAlias" `tup` [TypeAlias "X" "Y"]
   , "Underscores" `tup` [Function "f" [] Nothing [] [Assign "_" (EVar "x")]]
+  , "Operators" `tup` [Function "f" [] Nothing [] [
+                        StmtExp (InfixApp "+&" (EVar "a") (EVar "b"))
+                      , StmtExp (InfixApp "/" (EVar "c") (EVar "d"))
+                      , StmtExp (InfixApp "*" (EVar "e") (EVar "f"))
+                      ]]
   ] where tup = (,)
