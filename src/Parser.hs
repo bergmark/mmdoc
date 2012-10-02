@@ -86,7 +86,7 @@ p_ast T.Partial = do
 p_ast T.Union = do
   name <- p_name
   doc <- p_docstr
-  recs <- p_records
+  recs <- many (== T.Record) p_record
   t_end
   void $ p_name
   t_semi
@@ -153,12 +153,6 @@ p_polytypes =
         Just T.Gt -> return []
         Just (T.W _) -> eat >>= p_type >>= \t -> (p_polytypes' >>= \ts -> return (t:ts))
         _ -> throwErr $ ExpectedTok [T.Gt, T.W "<<type>>"]
-
-p_records :: Parse [Record]
-p_records =
-  look >>= \s -> case s of
-    Just T.Record -> eat >>= p_record >>= (\r -> (r :) <$> p_records)
-    _ -> return []
 
 p_record :: Token -> Parse Record
 p_record T.Record = do
@@ -315,7 +309,6 @@ token err tokP = do
   case s of
     Just t | tokP t -> eat >> return t
     _ -> throwErr err
-
 
 tok :: Token -> Parse Token
 tok t = token (ExpectedTok [t]) (== t)
