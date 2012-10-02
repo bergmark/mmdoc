@@ -89,4 +89,4 @@ p_token =
     <|> try (str "type"         *> return Type)
     <|> try (str "uniontype"    *> return Union)
     <|> Str <$> between (char '"') (char '"') (many $ noneOf "\"")
-    <|> W <$> many1 (choice [letter, digit, oneOf ":=*"])
+    <|> W <$> many1 (choice [letter, digit, oneOf ":=*_"])
