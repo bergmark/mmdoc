@@ -50,6 +50,7 @@ data Param = Input VarDecl
   deriving (Eq, Show)
 
 data Stmt = Assign Var Exp
+          | StmtExp Exp
   deriving (Eq, Show)
 
 type Case = (Pat, Exp)

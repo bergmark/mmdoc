@@ -33,7 +33,7 @@ newtype Parse a = Parse { unCompile :: StateT ParseState (ErrorT ParseError IO) 
 data ParseError = ParseError PError ParseState
                   deriving Show
 
-data PError = ExpectedTok [T.Token]
+data PError = ExpectedTok [Token]
             | UnsupportedAstToken
   deriving (Show)
 instance Error ParseError
@@ -122,18 +122,18 @@ p_package T.Package = do
   return $ Package Unencapsulated name doc content
 p_package _ = throwErr $ ExpectedTok [T.Package]
 
-p_importVars :: T.Token -> Parse (Either Wild [Name])
+p_importVars :: Token -> Parse (Either Wild [Name])
 p_importVars (T.W "*") = return $ Left Wild
 p_importVars T.ListStart = do
   l <- p_list T.ListStart
   return $ Right l
 p_importVars _ = throwErr $ ExpectedTok [T.W "*", T.ListStart]
 
-p_list :: T.Token -> Parse [Name]
+p_list :: Token -> Parse [Name]
 p_list T.ListStart = look >>= p_listContents
 p_list _ = throwErr $ ExpectedTok [T.ListStart]
 
-p_listContents :: Maybe T.Token -> Parse [Name]
+p_listContents :: Maybe Token -> Parse [Name]
 p_listContents (Just T.ListEnd) = t_listEnd >> return []
 p_listContents (Just _) = do
   el <- p_name
@@ -170,14 +170,17 @@ p_param T.Output = Output <$> (eat >>= p_vardecl)
 p_param _ = throwErr $ ExpectedTok [T.Input, T.Output]
 
 p_stmt :: Token -> Parse Stmt
-p_stmt (T.W lhs) =
-  eat >>= \s -> case s of
-    T.W ":=" -> do
-      t <- eat
-      exp <- p_exp t
+p_stmt l@(T.W lhs) =
+  look >>= \s -> case s of
+    Just (T.W ":=") -> do
+      void $ eat
+      exp <- p_exp =<< eat
       t_semi
       return (Assign lhs exp)
-    _ -> throwErr $ ExpectedTok [T.W ":="]
+    _ -> do
+      exp <- p_exp l
+      t_semi
+      return (StmtExp exp)
 p_stmt _ = throwErr $ ExpectedTok [T.W "<<any>>"]
 
 p_exp :: Token -> Parse Exp

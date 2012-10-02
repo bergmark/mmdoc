@@ -49,4 +49,5 @@ parserExpected = [
       Function "f" [ty "A"] Nothing [Input (Type "List" ["A"], "a"), Output (ty "A", "b")] []
     , PartFn "f" [ty "A"] Nothing [Input (Type "List" ["A"], "a")]
     ]
+  , "StandAloneStmt" `tup` [Function "f" [] Nothing [] [StmtExp (EVar "stmt")]]
   ] where tup = (,)
