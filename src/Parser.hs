@@ -64,7 +64,7 @@ p_ast (T.MComment s) = return $ MComment s
 p_ast T.Package = p_package T.Package
 p_ast T.Function = do
   name <- p_name
-  qs <- fromMaybe [] <$> option (== T.Lt) (eat >>= p_polytypes)
+  qs <- optionWith [] (== T.Lt) (eat >>= p_polytypes)
   doc <- p_docstr
   params <- many T.isInputOutput p_param
   tok' T.Algorithm
@@ -76,7 +76,7 @@ p_ast T.Function = do
 p_ast T.Partial = do
   tok' T.Function
   name <- p_name
-  qs <- fromMaybe [] <$> option (== T.Lt) (eat >>= p_polytypes)
+  qs <- optionWith [] (== T.Lt) (eat >>= p_polytypes)
   doc <- p_docstr
   params <- many T.isInputOutput p_param
   tok' T.End
@@ -189,7 +189,7 @@ p_stmt T.ParenL = do
 p_stmt T.If = do
   iff <- p_if'
   eifs <- many (== T.Elseif) (const p_if')
-  elsestmt <- option (== T.Else) (eat >> many (/= T.End) p_stmt)
+  elsestmt <- option (== T.Else) (tok' T.Else >> many (/= T.End) p_stmt)
   tok' T.End >> tok' T.If >> tok' T.Semi
   return $ If (iff : eifs) elsestmt
 p_stmt _ = throwErr $ ExpectedTok [T.W "<<any>>", T.ParenL, T.If]
@@ -271,7 +271,7 @@ p_vardecl _ = throwErr $ ExpectedTok [T.W "<<any>>"]
 
 p_type :: Token -> Parse Type
 p_type (T.W t) = do
-  qs <- fromMaybe [] <$> option (== T.Lt) (eat >>= p_polytypes)
+  qs <- optionWith [] (== T.Lt) (eat >>= p_polytypes)
   return $ Type t qs
 p_type _ = throwErr $ ExpectedTok [T.W "<<any>>"]
 
@@ -279,7 +279,7 @@ p_name :: Parse Name
 p_name = t_word
 
 p_docstr :: Parse (Maybe String)
-p_docstr = option (T.isStr) t_str
+p_docstr = option T.isStr t_str
 
 
 -- Tokens
@@ -365,6 +365,9 @@ option pred p =
   look >>= \s -> case s of
     Just v | pred v -> p >>= return . Just
     _ -> return Nothing
+
+optionWith :: a -> (Token -> Bool) -> Parse a -> Parse a
+optionWith def pred p = fromMaybe def <$> option pred p
 
 -- Misc
 
