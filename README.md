@@ -33,8 +33,6 @@ program. It is meant to run only on source files that `omc` accepts.
 
 ### Parsing
 
-* `elseif` branches in `if` expressions (statements done)
-
 * `match` guards
 
 * `public` keyword
