@@ -141,6 +141,7 @@ parserExpected = [
     , Function prot "f" [] Nothing [] []
     , Import   prot "I" Nothing (Left Wild)
     ]
+  , "Constant" `tup` [Constant (ty "Integer") "i" (EVar "3")]
   ] where tup = (,)
 
 instance IsString Name

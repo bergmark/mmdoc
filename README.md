@@ -39,8 +39,6 @@ program. It is meant to run only on source files that `omc` accepts.
 
 * `constant` definitions
 
-* Identify
-
 ### Doc Generation
 
 The work on this has not started yet. The output will be browsable

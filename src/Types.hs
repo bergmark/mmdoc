@@ -5,6 +5,7 @@ import           Prelude   hiding (exp)
 import qualified Tokenizer as T
 
 data AST = Comment String  -- //
+         | Constant Type Var Exp
          | Function (Maybe Protection) Name [Var] (Maybe DocString) [Param] [Stmt]
          | Import (Maybe Protection) Name (Maybe Name) (Either Wild [Var])
          | MComment String -- /* */
@@ -18,6 +19,7 @@ data AST = Comment String  -- //
 isAstStart :: T.Token -> Bool
 isAstStart T.Package = True
 isAstStart (T.Comment _) = True
+isAstStart T.Constant = True
 isAstStart T.Function = True
 isAstStart (T.MComment _) = True
 isAstStart T.Union = True

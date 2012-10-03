@@ -83,7 +83,10 @@ tokenize file name f = do
 
 parse :: ([AST] -> IO b) -> T.Program -> IO b
 parse f toks =
-  P.parse toks >>= either (\(P.ParseError perr (P.ParseState { P.parseTokens = ts })) -> error $ show (perr, take 3 ts)) f
+  P.parse toks >>= either (\(P.ParseError perr (P.ParseState {
+      P.lastToken = lt
+    , P.parseTokens = ts
+    })) -> error $ show (perr, lt, take 3 ts)) f
 
 eq :: (Eq a, Show a) => String -> a -> a -> IO ()
 eq preface expected actual =

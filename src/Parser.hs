@@ -64,6 +64,13 @@ p_ast :: TParser AST
 p_ast (T.Comment s) = return $ Comment s
 p_ast (T.MComment s) = return $ MComment s
 p_ast T.Package = p_package T.Package
+p_ast T.Constant = do
+  ty <- p_type =<< eat
+  var <- p_var =<< eat
+  tok' (T.S "=")
+  exp <- p_exp =<< eat
+  tok' T.Semi
+  return $ Constant ty var exp
 p_ast T.Function = do
   name <- p_name =<< eat
   qs <- optionWith [] (== T.Lt) (eat >>= p_polytypes)

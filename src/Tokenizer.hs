@@ -14,6 +14,7 @@ data Token = Algorithm
            | Case
            | Comma
            | Comment String
+           | Constant
            | Dot -- .
            | Else
            | Elseif
@@ -83,6 +84,7 @@ p_token =
     <|> try (fmap MComment $ str "/*" *> manyTill (noneOf "_") (try (string "*/")))
     <|> try (str "algorithm"    *> return Algorithm)
     <|> try (str "case"         *> return Case)
+    <|> try (str "constant"     *> return Constant)
     <|> try (str "encapsulated" *> return Encapsulated)
     <|> try (str "elseif"       *> return Elseif)
     <|> try (str "else"         *> return Else)
