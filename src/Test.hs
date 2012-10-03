@@ -16,7 +16,6 @@ import           Text.Groom
 import           Misc
 import qualified Parser                         as P
 import           ParserTest
-import qualified Print
 import qualified Tokenizer                      as T
 import           TokenTest
 

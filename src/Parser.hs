@@ -74,7 +74,7 @@ p_ast T.Function = do
   tok' T.End
   void $ p_name =<< eat
   tok' T.Semi
-  return $ Function Unprotected name qs doc params stmts
+  return $ Function Nothing name qs doc params stmts
 p_ast T.Partial = do
   tok' T.Function
   name <- p_name =<< eat
@@ -84,7 +84,7 @@ p_ast T.Partial = do
   tok' T.End
   void $ p_name =<< eat
   tok' T.Semi
-  return $ PartFn Unprotected name qs doc params
+  return $ PartFn Nothing name qs doc params
 p_ast T.Union = do
   name <- p_name =<< eat
   doc <- p_docstr
@@ -94,9 +94,11 @@ p_ast T.Union = do
   tok' T.Semi
   return $ Union name doc recs
 p_ast T.Protected = do
-  eat >>= p_ast >>= return . protectAst
+  eat >>= p_ast >>= return . protectAst Protected
+p_ast T.Public = do
+  eat >>= p_ast >>= return . protectAst Public
 p_ast T.Encapsulated = do
-  eat >>= p_package >>= return . encapsulateAst
+  eat >>= p_package >>= return . protectAst Encapsulated
 p_ast (T.W "replaceable") = do
   tok' T.Type
   name <- p_name =<< eat
@@ -121,17 +123,16 @@ p_package T.Package = do
   tok' T.End
   void $ p_name =<< eat
   tok' T.Semi
-  return $ Package Unencapsulated name doc content
+  return $ Package Nothing name doc content
 p_package _ = throwErr $ ExpectedTok [T.Package]
 
 p_import :: TParser AST
 p_import T.Import = do
-  protection <- maybe Unprotected (const Protected) <$> tokM T.Protected
   name <- p_name =<< eat
   name' <- option (== T.S "=") (tok' (T.S "=") >> eat >>= p_name)
   imports <- option (== T.Dot) (tok' T.Dot >> eat >>= p_importVars)
   tok' T.Semi
-  return $ Import protection name name' (maybe (Left Wild) id imports)
+  return $ Import Nothing name name' (maybe (Left Wild) id imports)
 p_import _ = throwErr $ ExpectedTok [T.Import]
 
 p_importVars :: TParser (Either Wild [Var])

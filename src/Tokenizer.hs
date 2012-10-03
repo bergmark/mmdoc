@@ -96,6 +96,7 @@ p_token =
     <|> try (str "package"      *> return Package)
     <|> try (str "partial"      *> return Partial)
     <|> try (str "protected"    *> return Protected)
+    <|> try (str "public"       *> return Public)
     <|> try (str "record"       *> return Record)
     <|> try (str "then"         *> return Then)
     <|> try (str "type"         *> return Type)

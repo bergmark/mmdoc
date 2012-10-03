@@ -81,10 +81,10 @@ instance Print Var where
   pr = id
 
 instance Print Protection where
-  pr Unprotected = ""
   pr Protected = "protected"
   pr Public = "public"
-
-instance Print Encapsulation where
   pr Encapsulated = "encapsulated"
-  pr Unencapsulated = ""
+
+instance Print p => Print (Maybe p) where
+  pr (Just x) = pr x
+  pr Nothing = ""

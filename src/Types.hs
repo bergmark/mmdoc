@@ -5,11 +5,11 @@ import           Prelude   hiding (exp)
 import qualified Tokenizer as T
 
 data AST = Comment String  -- //
-         | Function Protection Name [Var] (Maybe DocString) [Param] [Stmt]
-         | Import Protection Name (Maybe Name) (Either Wild [Var])
+         | Function (Maybe Protection) Name [Var] (Maybe DocString) [Param] [Stmt]
+         | Import (Maybe Protection) Name (Maybe Name) (Either Wild [Var])
          | MComment String -- /* */
-         | Package Encapsulation Name (Maybe DocString) [AST]
-         | PartFn Protection Name [Var] (Maybe DocString) [Param]
+         | Package (Maybe Protection) Name (Maybe DocString) [AST]
+         | PartFn (Maybe Protection) Name [Var] (Maybe DocString) [Param]
          | Replaceable Name
          | TypeAlias Name Name
          | Union Name (Maybe DocString) [Record]
@@ -24,22 +24,21 @@ isAstStart T.Union = True
 isAstStart T.Import = True
 isAstStart T.Protected = True
 isAstStart T.Encapsulated = True
+isAstStart T.Public = True
 isAstStart T.Partial = True
 isAstStart T.Type = True
 isAstStart (T.W "replaceable") = True
 isAstStart _ = False
 
-protectAst :: AST -> AST
-protectAst (Import _ a b c) = Import Protected a b c
-protectAst ast = error $ "protectAst cannot protect " ++ show ast
+protectAst :: Protection -> AST -> AST
+protectAst p (Import _ a b c) = Import (Just p) a b c
+protectAst p (Function _ a b c d e) = Function (Just p) a b c d e
+protectAst p (Package _ a b c) = Package (Just p) a b c
+protectAst p (PartFn _ a b c d) = PartFn (Just p) a b c d
+protectAst _p ast = error $ "protectAst cannot protect " ++ show ast
 
-encapsulateAst :: AST -> AST
-encapsulateAst (Package _ d a b) = Package Encapsulated d a b
-encapsulateAst ast = error $ "encapsulateAst cannot encapsulate " ++ show ast
 
-data Protection = Protected | Unprotected | Public
-  deriving (Eq, Show)
-data Encapsulation = Encapsulated | Unencapsulated
+data Protection = Protected | Public | Encapsulated
   deriving (Eq, Show)
 data Partiality = Partial | Concrete
   deriving (Eq, Show)
