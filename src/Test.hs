@@ -5,6 +5,7 @@ import           Control.Monad
 import           Data.List
 import           Data.Maybe
 import           System.Directory
+import           System.Environment
 import           System.FilePath
 import           Test.Framework
 import           Test.Framework.Providers.HUnit
@@ -33,9 +34,11 @@ tokenizerTests = do
           (assertEqual file (show $ fromJust expected) . show)
           (assertEqual file (fromJust expected))
 
-parserTests :: IO Test
-parserTests = do
-  files <- fmap (map ("tests" </>) . sort . filter dotMo) $ getDirectoryContents "tests"
+parserTests :: Maybe [FilePath] -> IO Test
+parserTests jfiles = do
+  files <- fmaybe jfiles
+             (fmap (map ("tests" </>) . sort . filter dotMo) $ getDirectoryContents "tests")
+             return
 --  let files = map ("tests" </>) ["Funcall.mo"]
   return $ testGroup "Tests" $ flip map files $ \file ->
     testCase file $ do
@@ -72,7 +75,14 @@ printTests = do
 
 main :: IO ()
 main = do
-  tokenizer <- tokenizerTests
-  parser <- parserTests
-  pr <- printTests
-  defaultMain [tokenizer, pr, parser]
+  testfiles <- (\v -> if null v then Nothing else Just v) . filter dotMo <$> getArgs
+  runnerArgs <- filter (not . dotMo) <$> getArgs
+  tests <- fmaybe testfiles
+    (do
+      tokenizer <- tokenizerTests
+      parser <- parserTests Nothing
+      pr <- printTests
+      return [tokenizer, parser, pr])
+    (\j -> (: []) <$> parserTests (Just j))
+
+  defaultMainWithArgs tests runnerArgs
