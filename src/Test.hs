@@ -10,6 +10,8 @@ import           System.FilePath
 import           Test.Framework
 import           Test.Framework.Providers.HUnit
 import           Test.HUnit                     (assertBool, assertEqual)
+import           Test.HUnit.Lang
+import           Text.Groom
 
 import           Misc
 import qualified Parser                         as P
@@ -54,7 +56,13 @@ parserTests jfiles = do
             case r of
               Left (P.ParseError perr (P.ParseState { P.lastToken = lt, P.parseTokens = ts })) ->
                 error . show $ (perr, lt, take 3 ts)
-              Right res -> assertEqual name (fromJust expected) res)
+              Right res -> eq name (fromJust expected) res)
+
+eq :: (Eq a, Show a) => [Char] -> a -> a -> IO ()
+eq preface expected actual =
+  unless (actual == expected) (assertFailure msg)
+ where msg = (if null preface then "" else preface ++ "\n") ++
+             "expected: " ++ groom expected ++ "\n but got: " ++ groom actual
 
 printTests :: IO Test
 printTests = do

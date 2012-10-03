@@ -20,6 +20,7 @@ executable main
                      directory,
                      filepath,
                      mtl,
+                     groom,
                      parsec
 
 executable test
@@ -31,6 +32,7 @@ executable test
                      directory,
                      filepath,
                      mtl,
+                     groom,
                      test-framework,
                      test-framework-hunit,
                      parsec
