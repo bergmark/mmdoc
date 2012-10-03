@@ -250,7 +250,14 @@ p_exp T.ParenL = do
 p_exp (T.S "-") = do
   e <- eat >>= p_exp
   return $ UnaryApp "-" e
-p_exp _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-"]
+p_exp T.If = do
+  pred <- p_exp =<< eat
+  tok' T.Then
+  stmt <- p_exp =<< eat
+  tok' T.Else
+  alt <- p_exp =<< eat
+  return $ EIf pred stmt alt
+p_exp _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If]
 
 p_expList :: TParser [Exp]
 p_expList t = do

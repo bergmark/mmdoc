@@ -4,8 +4,7 @@ import           Prelude   hiding (exp)
 
 import qualified Tokenizer as T
 
-data AST =
-           Comment String  -- //
+data AST = Comment String  -- //
          | Function Name [Var] (Maybe DocString) [Param] [Stmt]
          | Import Protection Name (Maybe Name) (Either Wild [Var])
          | MComment String -- /* */
@@ -60,7 +59,8 @@ data Stmt = Assign [Var] Exp
 data Case = Case Pat Exp
   deriving (Eq, Show)
 
-data Exp = EVar Name
+data Exp = EIf Exp Exp Exp
+         | EVar Name
          | Match [Var] [Case]
          | Funcall Name [Exp]
          | InfixApp Op Exp Exp

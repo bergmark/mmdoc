@@ -102,6 +102,7 @@ parserExpected = [
                             StmtExp (Funcall (qual ["A","B","c"]) [])
                           , StmtExp (EVar (qual ["A", "B", "c"]))
                           ]]
+  , "IfExpr" `tup` [func "f" [Assign ["r"] (EIf (InfixApp "==" (EVar "x") (EVar "y")) (EVar "a") (EVar "b"))]]
   ] where tup = (,)
 
 instance IsString Name
