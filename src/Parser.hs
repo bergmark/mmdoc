@@ -194,19 +194,12 @@ p_stmt T.ParenL = do
   tok' T.Semi
   return (Assign lhs exp)
 p_stmt T.If = do
-  iff <- p_if'
-  eifs <- many (== T.Elseif) (const p_if')
+  iff <- p_if' =<< eat
+  eifs <- many (== T.Elseif) (const $ eat >>= p_if')
   elsestmt <- option (== T.Else) (tok' T.Else >> many (/= T.End) p_stmt)
   tok' T.End >> tok' T.If >> tok' T.Semi
   return $ If (iff : eifs) elsestmt
 p_stmt _ = throwErr $ ExpectedTok [anyW, T.ParenL, T.If]
-
-p_if' :: Parse (Exp, [Stmt])
-p_if' = do
-  pred <- eat >>= p_exp
-  tok' T.Then
-  stmts <- many (\v -> v /= T.End && v /= T.Elseif && v /= T.Else) p_stmt
-  return (pred, stmts)
 
 commaSep :: Parse a -> Token -> Parse [a]
 commaSep pel endt = do
@@ -218,6 +211,13 @@ commaSep pel endt = do
       tok' T.Comma
       els <- commaSep pel endt
       return $ el : els
+
+p_if' :: TParser (Exp, [Stmt])
+p_if' t = do
+  pred <- p_exp t
+  tok' T.Then
+  stmts <- many (\v -> v /= T.End && v /= T.Elseif && v /= T.Else) p_stmt
+  return (pred, stmts)
 
 p_exp :: TParser Exp
 p_exp T.Match = do
@@ -251,16 +251,16 @@ p_exp (T.S "-") = do
   e <- eat >>= p_exp
   return $ UnaryApp "-" e
 p_exp T.If = do
-  iff <- p_expif'
-  eifs <- many (== T.Elseif) (const p_expif')
+  iff <- p_expif' =<< eat
+  eifs <- many (== T.Elseif) (const $ eat >>= p_expif')
   tok' T.Else
   alt <- p_exp =<< eat
   return $ EIf (iff : eifs) alt
 p_exp _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If]
 
-p_expif' :: Parse (Exp, Exp)
-p_expif' = do
-  pred <- eat >>= p_exp
+p_expif' :: TParser (Exp, Exp)
+p_expif' t = do
+  pred <- p_exp t
   tok' T.Then
   exp <- eat >>= p_exp
   return (pred, exp)
