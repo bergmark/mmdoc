@@ -4,4 +4,6 @@ function f
   input A.B<C> d;
   input A.B.C d;
 algorithm
+  A.B.c();
+  A.B.c;
 end f;

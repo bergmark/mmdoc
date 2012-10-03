@@ -2,6 +2,7 @@
 
 module ParserTest where
 
+import           Data.String
 import           Types
 
 ty :: Name -> Type
@@ -97,5 +98,11 @@ parserExpected = [
                           , Input (Type (qual ["A","B"]) [], "c")
                           , Input (Type (qual ["A","B"]) ["C"] , "d")
                           , Input (Type (qual ["A","B","C"]) [] , "d")
-                          ] []]
+                          ] [
+                            StmtExp (Funcall (qual ["A","B","c"]) [])
+                          , StmtExp (EVar (qual ["A", "B", "c"]))
+                          ]]
   ] where tup = (,)
+
+instance IsString Name
+  where fromString = UnQual

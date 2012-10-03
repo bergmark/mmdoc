@@ -1,11 +1,8 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Types where
 
-import           Data.String
-import           Prelude     hiding (exp)
+import           Prelude   hiding (exp)
 
-import qualified Tokenizer   as T
+import qualified Tokenizer as T
 
 data AST =
            Comment String  -- //
@@ -89,6 +86,3 @@ type Op = String
 data Name = UnQual String
           | Qual Name String
   deriving (Eq, Show)
-
-instance IsString Name
-  where fromString = UnQual
