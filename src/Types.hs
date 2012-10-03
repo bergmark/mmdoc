@@ -1,16 +1,19 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Types where
 
-import           Prelude   hiding (exp)
+import           Data.String
+import           Prelude     hiding (exp)
 
-import qualified Tokenizer as T
+import qualified Tokenizer   as T
 
 data AST =
            Comment String  -- //
-         | Function Name [Type] (Maybe DocString) [Param] [Stmt]
-         | Import Protection Name (Maybe Name) (Either Wild [Name])
+         | Function Name [Var] (Maybe DocString) [Param] [Stmt]
+         | Import Protection Name (Maybe Name) (Either Wild [Var])
          | MComment String -- /* */
          | Package Encapsulation Name (Maybe DocString) [AST]
-         | PartFn Name [Type] (Maybe DocString) [Param]
+         | PartFn Name [Var] (Maybe DocString) [Param]
          | Replaceable Name
          | TypeAlias Name Name
          | Union Name (Maybe DocString) [Record]
@@ -79,8 +82,13 @@ type VarDecl = (Type, Var)
 
 type DocString = String
 type Var = String
-data Type = Type Name [Type]
+data Type = Type Name [Var]
   deriving (Eq, Show)
 type Op = String
 
-type Name = String
+data Name = UnQual String
+          | Qual Name String
+  deriving (Eq, Show)
+
+instance IsString Name
+  where fromString = UnQual

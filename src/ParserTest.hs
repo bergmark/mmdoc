@@ -1,12 +1,19 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module ParserTest where
 
 import           Types
 
-ty :: String -> Type
-ty s = Type s []
+ty :: Name -> Type
+ty n = Type n []
 
-func :: String -> [Stmt] -> AST
+func :: Name -> [Stmt] -> AST
 func n s = Function n [] Nothing [] s
+
+qual :: [String] -> Name
+qual [] = error "qual"
+qual [x] = UnQual x
+qual (x:xs) = Qual (qual xs) x
 
 parserExpected :: [(String, [AST])]
 parserExpected = [
@@ -53,8 +60,8 @@ parserExpected = [
                     , PartFn "F" [] (Just "F docstring") [Input (ty "String", "x")]
                     ]]
   , "PolyType" `tup` [
-      Function "f" [ty "A"] Nothing [Input (Type "List" [ty "A"], "a"), Output (ty "A", "b")] []
-    , PartFn "f" [ty "A"] Nothing [Input (Type "List" [ty "A"], "a")]
+      Function "f" ["A"] Nothing [Input (Type "List" ["A"], "a"), Output (ty "A", "b")] []
+    , PartFn "f" ["A"] Nothing [Input (Type "List" ["A"], "a")]
     ]
   , "StandAloneStmt" `tup` [Function "f" [] Nothing [] [StmtExp (EVar "stmt")]]
   , "Funcall" `tup` [Function "f" [] Nothing [] [
@@ -85,4 +92,10 @@ parserExpected = [
                       Assign ["x"] (InfixApp "+" (EVar "1") (EVar "2"))
                     , Assign ["y"] (UnaryApp "-" (EVar "3"))
                     ]]
+  , "QualifiedName" `tup` [Function "f" [] Nothing [
+                            Input (Type "A" [] , "b")
+                          , Input (Type (qual ["A","B"]) [], "c")
+                          , Input (Type (qual ["A","B"]) ["C"] , "d")
+                          , Input (Type (qual ["A","B","C"]) [] , "d")
+                          ] []]
   ] where tup = (,)

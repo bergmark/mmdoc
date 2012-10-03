@@ -69,7 +69,7 @@ printTests = do
         (\toks -> do
           res <- P.parse toks
           feither res
-            (\(P.ParseError perr (P.ParseState { P.parseTokens = ts })) -> error . show $ (perr, take 3 ts))
+            (\(P.ParseError perr (P.ParseState { P.parseTokens = ts })) -> error $ show (perr, take 3 ts))
             (const $ assertBool "..." True))
 --            (\r -> assertEqual name contents (Print.printSrc r)))
 

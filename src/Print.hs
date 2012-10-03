@@ -29,8 +29,8 @@ instance Print AST where
                                           , concatLines pr cs
                                           , "\nend " ++ pr n ++ ";"]
   pr (Package Unencapsulated n d cs) = "package " ++ pr n ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines pr cs ++ "\nend " ++ pr n ++ ";"
-  pr (Function n qs d ps _stms) = "function " ++ pr n ++ pr_typeList qs ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
-  pr (PartFn n qs d ps) = "partial function " ++ pr n ++ pr_typeList qs ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
+  pr (Function n qs d ps _stms) = "function " ++ pr n ++ pr_polyList qs ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
+  pr (PartFn n qs d ps) = "partial function " ++ pr n ++ pr_polyList qs ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
   pr (Comment s) = "//" ++ s
   pr (MComment s) = "/*" ++ s ++ "*/"
   pr (Union n d rs) = concat [
@@ -45,22 +45,23 @@ instance Print AST where
   pr (Replaceable n) = "replaceable type " ++ pr n ++ " subtypeof Any;"
   pr (TypeAlias a b) = "type " ++ pr a ++ " = " ++ pr b ++ ";"
 
-pr_importList :: Either Wild [Name] -> String
+pr_importList :: Either Wild [Var] -> String
 pr_importList (Left Wild) = ".*"
-pr_importList (Right ns) = "." ++ pr_nameList ns
+pr_importList (Right ns) = "." ++ pr_list ns
 
-pr_nameList :: [Name] -> String
-pr_nameList ns = "{" ++ (intercalate ", " . map pr $ ns) ++ "}"
+pr_list :: Print p => [p] -> String
+pr_list ps = "{" ++ (intercalate ", " . map pr $ ps) ++ "}"
 
-pr_typeList :: [Type] -> String
-pr_typeList ts = "<" ++ (intercalate ", " . map pr $ ts) ++ ">"
+pr_polyList :: Print p => [p] -> String
+pr_polyList ps = "<" ++ (intercalate ", " . map pr $ ps) ++ ">"
 
 pr_docstr :: Maybe DocString -> String
 pr_docstr Nothing = ""
 pr_docstr (Just s) = "\"" ++ s ++ "\""
 
 instance Print Name where
-  pr s = s
+  pr (UnQual s) = s
+  pr (Qual n s) = pr n ++ "." ++ s
 
 instance Print Record where
   pr (Record n vds) = "record" ++ pr n ++ concatMap pr vds ++ "end" ++ pr n ++ ";"
@@ -73,4 +74,7 @@ instance Print Param where
   pr (Output vd) = "output " ++ pr vd
 
 instance Print Type where
-  pr (Type n ns) = pr n ++ (if null ns then "" else "<" ++ (intercalate ", " $ map pr ns) ++ ">")
+  pr (Type n ns) = pr n ++ (if null ns then "" else "<" ++ (intercalate ", " ns) ++ ">")
+
+instance Print Var where
+  pr = id
