@@ -59,7 +59,7 @@ data Stmt = Assign [Var] Exp
 data Case = Case Pat Exp
   deriving (Eq, Show)
 
-data Exp = EIf Exp Exp Exp
+data Exp = EIf [(Exp,Exp)] Exp
          | EVar Name
          | Match [Var] [Case]
          | Funcall Name [Exp]

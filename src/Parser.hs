@@ -251,13 +251,19 @@ p_exp (T.S "-") = do
   e <- eat >>= p_exp
   return $ UnaryApp "-" e
 p_exp T.If = do
-  pred <- p_exp =<< eat
-  tok' T.Then
-  stmt <- p_exp =<< eat
+  iff <- p_expif'
+  eifs <- many (== T.Elseif) (const p_expif')
   tok' T.Else
   alt <- p_exp =<< eat
-  return $ EIf pred stmt alt
+  return $ EIf (iff : eifs) alt
 p_exp _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If]
+
+p_expif' :: Parse (Exp, Exp)
+p_expif' = do
+  pred <- eat >>= p_exp
+  tok' T.Then
+  exp <- eat >>= p_exp
+  return (pred, exp)
 
 p_expList :: TParser [Exp]
 p_expList t = do
