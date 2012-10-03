@@ -187,7 +187,7 @@ p_stmt l@(T.W lhs) =
       tok' T.Semi
       return (StmtExp exp)
 p_stmt T.ParenL = do
-  lhs <- commaSep (p_var =<< eat) T.ParenR
+  lhs <- commaSep p_var T.ParenR =<< eat
   tok' T.ParenR
   tok' (T.S ":=")
   exp <- p_exp =<< eat
@@ -201,15 +201,15 @@ p_stmt T.If = do
   return $ If (iff : eifs) elsestmt
 p_stmt _ = throwErr $ ExpectedTok [anyW, T.ParenL, T.If]
 
-commaSep :: Parse a -> Token -> Parse [a]
-commaSep pel endt = do
-  el <- pel
+commaSep :: TParser a -> Token -> TParser [a]
+commaSep pel endt t = do
+  el <- pel t
   hi <- lookIs endt
   if hi
     then return [el]
     else do
       tok' T.Comma
-      els <- commaSep pel endt
+      els <- commaSep pel endt =<< eat
       return $ el : els
 
 p_if' :: TParser (Exp, [Stmt])
@@ -244,7 +244,7 @@ p_exp T.ParenL = do
   lookIs T.ParenR >>= \b -> if b
     then eat >> return Unit
     else do
-      ts <- commaSep (eat >>= p_exp) T.ParenR
+      ts <- commaSep p_exp T.ParenR =<< eat
       tok' T.ParenR
       return (Tuple ts)
 p_exp (T.S "-") = do
