@@ -22,15 +22,18 @@ concatLines f cs = linewrap (map f cs)
 ind :: String -> String
 ind s = "  " ++ s
 
+(<++>) :: String -> String -> String
+(<++>) "" y = y
+(<++>) x  y = x ++ " " ++ y
+
 
 instance Print AST where
-  pr (Package Encapsulated n d cs) = concat [ "encapsulated package " ++ pr n ++ "\n"
-                                          , pr_docstr d
-                                          , concatLines pr cs
-                                          , "\nend " ++ pr n ++ ";"]
-  pr (Package Unencapsulated n d cs) = "package " ++ pr n ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines pr cs ++ "\nend " ++ pr n ++ ";"
-  pr (Function n qs d ps _stms) = "function " ++ pr n ++ pr_polyList qs ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
-  pr (PartFn n qs d ps) = "partial function " ++ pr n ++ pr_polyList qs ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
+  pr (Package e n d cs) = concat [ pr e <++> "package " ++ pr n ++ "\n"
+                                 , pr_docstr d
+                                 , concatLines pr cs
+                                 , "\nend " ++ pr n ++ ";"]
+  pr (Function p n qs d ps _stms) = pr p <++> "function " ++ pr n ++ pr_polyList qs ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
+  pr (PartFn p n qs d ps) = pr p <++> "partial function " ++ pr n ++ pr_polyList qs ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
   pr (Comment s) = "//" ++ s
   pr (MComment s) = "/*" ++ s ++ "*/"
   pr (Union n d rs) = concat [
@@ -38,10 +41,8 @@ instance Print AST where
                      ,   pr_docstr d ++ "\n"
                      ,   concatLines (ind . pr) rs
                      , "\nend " ++ pr n ++ ";"]
-  pr (Import Protected n Nothing vs)     = "protected import " ++ pr n ++ pr_importList vs ++ ";"
-  pr (Import Protected n (Just ln) vs)   = "protected import " ++ pr n ++ " = " ++ pr ln ++ pr_importList vs ++ ";"
-  pr (Import Unprotected n Nothing vs)   = "import " ++ pr n ++ pr_importList  vs ++ ";"
-  pr (Import Unprotected n (Just ln) vs) = "import " ++ pr n ++ " = " ++ pr ln ++ pr_importList vs ++ ";"
+  pr (Import p n Nothing vs)     = pr p <++> "import " ++ pr n ++ pr_importList vs ++ ";"
+  pr (Import p n (Just ln) vs)   = pr p <++> "import " ++ pr n ++ " = " ++ pr ln ++ pr_importList vs ++ ";"
   pr (Replaceable n) = "replaceable type " ++ pr n ++ " subtypeof Any;"
   pr (TypeAlias a b) = "type " ++ pr a ++ " = " ++ pr b ++ ";"
 
@@ -78,3 +79,12 @@ instance Print Type where
 
 instance Print Var where
   pr = id
+
+instance Print Protection where
+  pr Unprotected = ""
+  pr Protected = "protected"
+  pr Public = "public"
+
+instance Print Encapsulation where
+  pr Encapsulated = "encapsulated"
+  pr Unencapsulated = ""

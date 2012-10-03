@@ -9,7 +9,10 @@ ty :: Name -> Type
 ty n = Type n []
 
 func :: Name -> [Stmt] -> AST
-func n s = Function n [] Nothing [] s
+func n s = Function Unprotected n [] Nothing [] s
+
+partfn :: Name -> [Param] -> AST
+partfn n ps = PartFn Unprotected n [] Nothing ps
 
 qual :: [String] -> Name
 qual [] = error "qual"
@@ -19,14 +22,17 @@ qual (x:xs) = Qual (qual xs) x
 parserExpected :: [(String, [AST])]
 parserExpected = [
     "Package" `tup` [Package Unencapsulated "Package" Nothing []]
-  , "Function" `tup` [Package Unencapsulated "Package" Nothing [Function "f" [] Nothing [] []]]
+  , "Function" `tup` [Package Unencapsulated "Package" Nothing [func "f" []]]
   , "FunctionArgs" `tup` [Package Unencapsulated "Package" Nothing
-                           [Function "f" [] Nothing
-                             [Input (ty "Integer", "x")
-                             ,Input (ty "Integer","y")
-                             ,Output (ty "Boolean","b1")
-                             ,Output (ty "Boolean","b2")] []]]
-  , "FunctionStatements" `tup` [Package Unencapsulated "Package" Nothing [Function "f" [] Nothing [] [Assign ["x"] (EVar "y"),Assign ["aoeu123"] (EVar "aoeu123")]]]
+                           [Function Unprotected "f" [] Nothing [
+                             Input (ty "Integer", "x")
+                           , Input (ty "Integer","y")
+                           , Output (ty "Boolean","b1")
+                           , Output (ty "Boolean","b2")] []
+                           ]]
+  , "FunctionStatements" `tup` [Package Unencapsulated "Package" Nothing [
+                                 func "f" [Assign ["x"] (EVar "y"),Assign ["aoeu123"] (EVar "aoeu123")]]
+                               ]
   , "Match" `tup` [Package Unencapsulated "Package" Nothing
                     [func "f" [
                       Assign ["x"] (Match ["y"] [Case (EVar "z") (EVar "w")])]]]
@@ -50,22 +56,23 @@ parserExpected = [
                        , Import Unprotected "W"    Nothing       (Right ["a","b","cde"])
                        ]]
   , "EncapsulatedPackage" `tup` [Package Encapsulated "P" Nothing []]
-  , "PartialFunction" `tup` [PartFn "X" [] Nothing [
-                                Input (ty "Integer", "a")
-                              , Output (ty "Integer", "b")]]
+  , "PartialFunction" `tup` [partfn "X" [
+                              Input (ty "Integer", "a")
+                            , Output (ty "Integer", "b")
+                            ]]
   , "ReplaceableType" `tup` [Replaceable "Element"]
   , "Strings" `tup` [Package Unencapsulated "P" (Just "P doc string") [
-                      Function "f" [] (Just "f doc\n  string") [] []
+                      Function Unprotected "f" [] (Just "f doc\n  string") [] []
                     , Union "U" (Just "U docstring") []
                     , Union "W" Nothing []
-                    , PartFn "F" [] (Just "F docstring") [Input (ty "String", "x")]
+                    , PartFn Unprotected "F" [] (Just "F docstring") [Input (ty "String", "x")]
                     ]]
   , "PolyType" `tup` [
-      Function "f" ["A"] Nothing [Input (Type "List" ["A"], "a"), Output (ty "A", "b")] []
-    , PartFn "f" ["A"] Nothing [Input (Type "List" ["A"], "a")]
+      Function Unprotected "f" ["A"] Nothing [Input (Type "List" ["A"], "a"), Output (ty "A", "b")] []
+    , PartFn Unprotected "f" ["A"] Nothing [Input (Type "List" ["A"], "a")]
     ]
-  , "StandAloneStmt" `tup` [Function "f" [] Nothing [] [StmtExp (EVar "stmt")]]
-  , "Funcall" `tup` [Function "f" [] Nothing [] [
+  , "StandAloneStmt" `tup` [func "f" [StmtExp (EVar "stmt")]]
+  , "Funcall" `tup` [func "f" [
                       StmtExp (Funcall "f" [])
                     , Assign ["x"] (Funcall "f" [])
                     , StmtExp (Funcall "g" [Funcall "f" [], EVar "x", EVar "y"])
@@ -93,7 +100,7 @@ parserExpected = [
                       Assign ["x"] (InfixApp "+" (EVar "1") (EVar "2"))
                     , Assign ["y"] (UnaryApp "-" (EVar "3"))
                     ]]
-  , "QualifiedName" `tup` [Function "f" [] Nothing [
+  , "QualifiedName" `tup` [Function Unprotected "f" [] Nothing [
                             Input (Type "A" [] , "b")
                           , Input (Type (qual ["A","B"]) [], "c")
                           , Input (Type (qual ["A","B"]) ["C"] , "d")
@@ -109,6 +116,17 @@ parserExpected = [
                      , (InfixApp "==" (EVar "z") (EVar "w"), EVar "b")
                      ] (EVar "c"))
                    ]]
+  , "Protection" `tup` [
+      PartFn   Unprotected "F" [] Nothing []
+    , Function Unprotected "f" [] Nothing [] []
+    , Import   Unprotected "W" Nothing (Left Wild)
+    , PartFn   Protected "F" [] Nothing []
+    , Function Protected "f" [] Nothing [] []
+    , Import   Protected "W" Nothing (Left Wild)
+    , PartFn   Public "F" [] Nothing []
+    , Function Public "f" [] Nothing [] []
+    , Import   Public "W" Nothing (Left Wild)
+    ]
   ] where tup = (,)
 
 instance IsString Name

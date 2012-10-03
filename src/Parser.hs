@@ -74,7 +74,7 @@ p_ast T.Function = do
   tok' T.End
   void $ p_name =<< eat
   tok' T.Semi
-  return $ Function name qs doc params stmts
+  return $ Function Unprotected name qs doc params stmts
 p_ast T.Partial = do
   tok' T.Function
   name <- p_name =<< eat
@@ -84,7 +84,7 @@ p_ast T.Partial = do
   tok' T.End
   void $ p_name =<< eat
   tok' T.Semi
-  return $ PartFn name qs doc params
+  return $ PartFn Unprotected name qs doc params
 p_ast T.Union = do
   name <- p_name =<< eat
   doc <- p_docstr

@@ -34,6 +34,7 @@ data Token = Algorithm
            | ParenL
            | ParenR
            | Partial
+           | Public
            | Protected
            | Record
            | Semi -- ;

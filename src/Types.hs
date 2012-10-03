@@ -5,11 +5,11 @@ import           Prelude   hiding (exp)
 import qualified Tokenizer as T
 
 data AST = Comment String  -- //
-         | Function Name [Var] (Maybe DocString) [Param] [Stmt]
+         | Function Protection Name [Var] (Maybe DocString) [Param] [Stmt]
          | Import Protection Name (Maybe Name) (Either Wild [Var])
          | MComment String -- /* */
          | Package Encapsulation Name (Maybe DocString) [AST]
-         | PartFn Name [Var] (Maybe DocString) [Param]
+         | PartFn Protection Name [Var] (Maybe DocString) [Param]
          | Replaceable Name
          | TypeAlias Name Name
          | Union Name (Maybe DocString) [Record]
@@ -37,7 +37,7 @@ encapsulateAst :: AST -> AST
 encapsulateAst (Package _ d a b) = Package Encapsulated d a b
 encapsulateAst ast = error $ "encapsulateAst cannot encapsulate " ++ show ast
 
-data Protection = Protected | Unprotected
+data Protection = Protected | Unprotected | Public
   deriving (Eq, Show)
 data Encapsulation = Encapsulated | Unencapsulated
   deriving (Eq, Show)
