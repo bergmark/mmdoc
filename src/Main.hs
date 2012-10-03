@@ -13,12 +13,12 @@ main = do
   f <- readFile fp
   print fp
   case T.parseFile f of
-    Left err -> putStrLn "----- tokenize error: " >> print err
+    Left err -> putStrLn "----- tokenize error:" >> print err
     Right ts -> do
-      putStrLn "----- Tokens:">> print ts
+      putStrLn "----- Tokens:" >> print ts
       p <- P.parse ts
       case p of
-        Left err -> putStrLn "---- parse error: " >> print err
+        Left err -> putStrLn "---- parse error:" >> print err
         Right ast -> do
-          putStrLn "----- AST: " >> print ast
-          putStrLn "----- Print: " >> putStrLn (printSrc ast)
+          putStrLn "----- AST:" >> print ast
+          putStrLn "----- Print:" >> putStrLn (printSrc ast)

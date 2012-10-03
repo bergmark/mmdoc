@@ -35,14 +35,6 @@ program. It is meant to run only on source files that `omc` accepts.
 
 * `match` guards
 
-* `public` keyword
-
-* Warn unless a function is declared `public` or `private`
-
-* Warn if a package isn't encapsulated
-
-* Warn on unprotected imports that don't explicitly import using `{}`
-
 * Better identification of documentation strings
 
 * `constant` definitions

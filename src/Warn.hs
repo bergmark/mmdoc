@@ -10,7 +10,7 @@ check = concatMap check'
 
 check' :: AST -> [Warning]
 check' (Comment _) = []
-check' (Import Nothing n _ _) = return $ W.Unprotected (pr n)
+check' (Import Nothing n _ (Left Wild)) = return $ W.Unprotected (pr n)
 check' (Import _ _ _ _) = []
 check' (Function Nothing n _ _ _ _) = return $ W.Unprotected (pr n)
 check' (Function _ _ _ _ _ _) = []
