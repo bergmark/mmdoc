@@ -6,11 +6,11 @@ import           Warnings (Warning)
 import qualified Warnings as W
 
 check :: [AST] -> [Warning]
-check = concatMap (\ast -> checkProtection ast ++ checkDocstring ast)
+check = concatMap (\ast -> checkProtection ast ++ checkDocstring ast ++ checkStmts ast)
 
 checkProtection :: AST -> [Warning]
 checkProtection (Import Nothing n _ (Left Wild)) = return $ W.Unprotected (pr n)
-checkProtection (Function Nothing n _ _ _ _ _) = return $ W.Unprotected (pr n)
+checkProtection (Function Nothing n _ _ _ _ stmts) = return $ W.Unprotected (pr n)
 checkProtection (Package Nothing n _ cs) = W.Unencapsulated (pr n) : concatMap checkProtection cs
 checkProtection (ASTPartFn (PartFn Nothing n _ _ _)) = return $ W.Unprotected (pr n)
 checkProtection _ = []
@@ -21,3 +21,11 @@ checkDocstring (Package _ n Nothing cs) = W.MissingDocstring (pr n) : concatMap 
 checkDocstring (ASTPartFn (PartFn _ n _ Nothing _)) = return $ W.MissingDocstring (pr n)
 checkDocstring (Union n Nothing _) = return $ W.MissingDocstring (pr n)
 checkDocstring _ = []
+
+checkStmts :: AST -> [Warning]
+checkStmts (Function _ _ _ _ _ _ stmts) = concatMap checkStmts' stmts
+checkStmts _ = []
+
+checkStmts' :: Stmt -> [Warning]
+checkStmts' (StmtExp e) = return $ W.StmtExp e
+checkStmts' _ = []

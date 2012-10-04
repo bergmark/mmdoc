@@ -63,7 +63,7 @@ data Stmt = Assign [Var] Exp
   deriving (Eq, Show)
 
 data Case = Case Pat Exp
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 data FunProt = FunProtVar VarDecl
              | FunProtPart PartFn
@@ -79,7 +79,7 @@ data Exp = EIf [(Exp,Exp)] Exp
          | Tuple [Exp]
          | Unit -- ()
          -- TODO List
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 type Pat = Exp
 
@@ -96,4 +96,4 @@ type Op = String
 
 data Name = UnQual String
           | Qual Name String
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
