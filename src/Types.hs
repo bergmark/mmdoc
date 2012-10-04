@@ -75,6 +75,7 @@ data Exp = EIf [(Exp,Exp)] Exp
          | Funcall Name [Exp]
          | InfixApp Op Exp Exp
          | UnaryApp Op Exp
+         | Str String
          | Tuple [Exp]
          | Unit -- ()
          -- TODO List

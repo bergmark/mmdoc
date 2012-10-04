@@ -153,6 +153,9 @@ parserExpected = [
   , "Not" `tup` [
       func "f" [StmtExp $ UnaryApp "not" (EVar "y")]
     ]
+  , "StrExp" `tup` [
+      func "f" [StmtExp $ Str "str"]
+    ]
   ] where tup = (,)
 
 instance IsString Name
