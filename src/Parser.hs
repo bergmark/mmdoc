@@ -76,12 +76,13 @@ p_ast T.Function = do
   qs <- optionWith [] (== T.Lt) (eat >>= p_polytypes)
   doc <- p_docstr
   params <- many T.isInputOutput p_param
+  prots <- optionWith [] (== T.Protected) (eat >> p_vardecls)
   tok' T.Algorithm
   stmts <- many (/= T.End) p_stmt
   tok' T.End
   void $ p_name =<< eat
   tok' T.Semi
-  return $ Function Nothing name qs doc params stmts
+  return $ Function Nothing name qs doc params prots stmts
 p_ast T.Partial = do
   tok' T.Function
   name <- p_name =<< eat
@@ -170,7 +171,7 @@ p_polytypes _ = throwErr $ ExpectedTok [T.Lt, T.Gt, anyW]
 p_record :: TParser Record
 p_record T.Record = do
   name <- p_name =<< eat
-  vardecls <- many T.isW p_vardecl
+  vardecls <- p_vardecls
   tok' T.End
   void $ p_name =<< eat
   tok' T.Semi
@@ -293,6 +294,9 @@ p_match_case _ = throwErr $ ExpectedTok [T.Case]
 
 p_pat :: TParser Pat
 p_pat = p_exp
+
+p_vardecls :: Parse [VarDecl]
+p_vardecls = many T.isW p_vardecl
 
 p_vardecl :: TParser VarDecl
 p_vardecl n@(T.W _) = do

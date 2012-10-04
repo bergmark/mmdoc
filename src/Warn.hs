@@ -6,20 +6,18 @@ import           Warnings (Warning)
 import qualified Warnings as W
 
 check :: [AST] -> [Warning]
-check = concatMap check'
+check ast = concatMap checkProtection ast ++ concatMap checkDocstring ast
 
-check' :: AST -> [Warning]
-check' (Comment _) = []
-check' (Constant _ _ _) = []
-check' (Import Nothing n _ (Left Wild)) = return $ W.Unprotected (pr n)
-check' (Import _ _ _ _) = []
-check' (Function Nothing n _ _ _ _) = return $ W.Unprotected (pr n)
-check' (Function _ _ _ _ _ _) = []
-check' (MComment _) = []
-check' (Package Nothing n _ cs) = W.Unencapsulated (pr n) : check cs
-check' (Package _ n _ cs) = check cs
-check' (PartFn Nothing n _ _ _) = return $ W.Unprotected (pr n)
-check' (PartFn _ _ _ _ _) = []
-check' (Replaceable _) = []
-check' (TypeAlias _ _) = []
-check' (Union _ _ _) = []
+checkProtection :: AST -> [Warning]
+checkProtection (Import Nothing n _ (Left Wild)) = return $ W.Unprotected (pr n)
+checkProtection (Function Nothing n _ _ _ _ _) = return $ W.Unprotected (pr n)
+checkProtection (Package Nothing n _ cs) = W.Unencapsulated (pr n) : check cs
+checkProtection (PartFn Nothing n _ _ _) = return $ W.Unprotected (pr n)
+checkProtection _ = []
+
+checkDocstring :: AST -> [Warning]
+checkDocstring (Function _ n  _ Nothing _ _ _) = return $ W.MissingDocstring (pr n)
+checkDocstring (Package _ n Nothing cs) = W.MissingDocstring (pr n) : check cs
+checkDocstring (PartFn _ n _ Nothing _) = return $ W.MissingDocstring (pr n)
+checkDocstring (Union n Nothing _) = return $ W.MissingDocstring (pr n)
+checkDocstring _ = []

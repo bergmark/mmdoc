@@ -41,5 +41,4 @@ program. It is meant to run only on source files that `omc` accepts.
 
 ### Doc Generation
 
-The work on this has not started yet. The output will be browsable
-HTML with links between functions. An intermediary format may be used.
+* Generate HTML instead of just printing the AST.

@@ -9,7 +9,7 @@ ty :: Name -> Type
 ty n = Type n []
 
 func :: Name -> [Stmt] -> AST
-func n s = Function Nothing n [] Nothing [] s
+func n s = Function Nothing n [] Nothing [] [] s
 
 partfn :: Name -> [Param] -> AST
 partfn n ps = PartFn Nothing n [] Nothing ps
@@ -37,7 +37,7 @@ parserExpected = [
                              Input (ty "Integer", "x")
                            , Input (ty "Integer","y")
                            , Output (ty "Boolean","b1")
-                           , Output (ty "Boolean","b2")] []
+                           , Output (ty "Boolean","b2")] [] []
                            ]]
   , "FunctionStatements" `tup` [Package Nothing "Package" Nothing [
                                  func "f" [Assign ["x"] (EVar "y"),Assign ["aoeu123"] (EVar "aoeu123")]]
@@ -71,13 +71,13 @@ parserExpected = [
                             ]]
   , "ReplaceableType" `tup` [Replaceable "Element"]
   , "Strings" `tup` [Package Nothing "P" (Just "P doc string") [
-                      Function Nothing "f" [] (Just "f doc\n  string") [] []
+                      Function Nothing "f" [] (Just "f doc\n  string") [] [] []
                     , Union "U" (Just "U docstring") []
                     , Union "W" Nothing []
                     , PartFn Nothing "F" [] (Just "F docstring") [Input (ty "String", "x")]
                     ]]
   , "PolyType" `tup` [
-      Function Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a"), Output (ty "A", "b")] []
+      Function Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a"), Output (ty "A", "b")] [] []
     , PartFn Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a")]
     ]
   , "StandAloneStmt" `tup` [func "f" [StmtExp (EVar "stmt")]]
@@ -114,7 +114,7 @@ parserExpected = [
                           , Input (Type (qual ["A","B"]) [], "c")
                           , Input (Type (qual ["A","B"]) ["C"] , "d")
                           , Input (Type (qual ["A","B","C"]) [] , "d")
-                          ] [
+                          ] [] [
                             StmtExp (Funcall (qual ["A","B","c"]) [])
                           , StmtExp (EVar (qual ["A", "B", "c"]))
                           ]]
@@ -128,20 +128,24 @@ parserExpected = [
   , "Protection" `tup` [
       Package  Nothing "P" Nothing []
     , PartFn   Nothing "F" [] Nothing []
-    , Function Nothing "f" [] Nothing [] []
+    , Function Nothing "f" [] Nothing [] [] []
     , Import   Nothing "I" Nothing (Left Wild)
 
     , Package  publ "P" Nothing []
     , PartFn   publ "F" [] Nothing []
-    , Function publ "f" [] Nothing [] []
+    , Function publ "f" [] Nothing [] [] []
     , Import   publ "I" Nothing (Left Wild)
 
     , Package  prot "P" Nothing []
     , PartFn   prot "F" [] Nothing []
-    , Function prot "f" [] Nothing [] []
+    , Function prot "f" [] Nothing [] [] []
     , Import   prot "I" Nothing (Left Wild)
     ]
   , "Constant" `tup` [Constant (ty "Integer") "i" (EVar "3")]
+  , "FunProtected" `tup` [
+      Function Nothing "f" [] Nothing [] [] []
+    , Function Nothing "g" [] Nothing [] [(ty "Integer", "x"), (ty "String", "y")] []
+    ]
   ] where tup = (,)
 
 instance IsString Name

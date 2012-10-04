@@ -32,7 +32,7 @@ instance Print AST where
                                  , pr_docstr d
                                  , concatLines pr cs
                                  , "\nend " ++ pr n ++ ";"]
-  pr (Function p n qs d ps _stms) = pr p <++> "function " ++ pr n ++ pr_polyList qs ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
+  pr (Function p n qs d ps _prot _stms) = pr p <++> "function " ++ pr n ++ pr_polyList qs ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
   pr (PartFn p n qs d ps) = pr p <++> "partial function " ++ pr n ++ pr_polyList qs ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"
   pr (Comment s) = "//" ++ s
   pr (Constant ty var _exp) = "constant" <++> pr ty <++> pr var ++ " = <<exp>>";
