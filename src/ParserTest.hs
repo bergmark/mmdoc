@@ -12,7 +12,7 @@ func :: Name -> [Stmt] -> AST
 func n s = Function Nothing n [] Nothing [] [] s
 
 partfn :: Name -> [Param] -> AST
-partfn n ps = PartFn Nothing n [] Nothing ps
+partfn n ps = ASTPartFn $ PartFn Nothing n [] Nothing ps
 
 qual :: [String] -> Name
 qual [] = error "qual"
@@ -74,11 +74,11 @@ parserExpected = [
                       Function Nothing "f" [] (Just "f doc\n  string") [] [] []
                     , Union "U" (Just "U docstring") []
                     , Union "W" Nothing []
-                    , PartFn Nothing "F" [] (Just "F docstring") [Input (ty "String", "x")]
+                    , ASTPartFn $ PartFn Nothing "F" [] (Just "F docstring") [Input (ty "String", "x")]
                     ]]
   , "PolyType" `tup` [
       Function Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a"), Output (ty "A", "b")] [] []
-    , PartFn Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a")]
+    , ASTPartFn $ PartFn Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a")]
     ]
   , "StandAloneStmt" `tup` [func "f" [StmtExp (EVar "stmt")]]
   , "Funcall" `tup` [func "f" [
@@ -127,24 +127,28 @@ parserExpected = [
                    ]]
   , "Protection" `tup` [
       Package  Nothing "P" Nothing []
-    , PartFn   Nothing "F" [] Nothing []
+    , ASTPartFn (PartFn Nothing "F" [] Nothing [])
     , Function Nothing "f" [] Nothing [] [] []
     , Import   Nothing "I" Nothing (Left Wild)
 
     , Package  publ "P" Nothing []
-    , PartFn   publ "F" [] Nothing []
+    , ASTPartFn $ PartFn publ "F" [] Nothing []
     , Function publ "f" [] Nothing [] [] []
     , Import   publ "I" Nothing (Left Wild)
 
     , Package  prot "P" Nothing []
-    , PartFn   prot "F" [] Nothing []
+    , ASTPartFn $ PartFn prot "F" [] Nothing []
     , Function prot "f" [] Nothing [] [] []
     , Import   prot "I" Nothing (Left Wild)
     ]
   , "Constant" `tup` [Constant (ty "Integer") "i" (EVar "3")]
   , "FunProtected" `tup` [
       Function Nothing "f" [] Nothing [] [] []
-    , Function Nothing "g" [] Nothing [] [(ty "Integer", "x"), (ty "String", "y")] []
+    , Function Nothing "g" [] Nothing [] [
+        FunProtVar (ty "Integer", "x")
+      , FunProtVar (ty "String", "y")
+      , FunProtPart $ PartFn Nothing "G" [] Nothing []
+      ] []
     ]
   ] where tup = (,)
 
