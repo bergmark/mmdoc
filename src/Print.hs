@@ -44,7 +44,7 @@ instance Print AST where
                      , "\nend " ++ pr n ++ ";"]
   pr (Import p n Nothing vs)     = pr p <++> "import " ++ pr n ++ pr_importList vs ++ ";"
   pr (Import p n (Just ln) vs)   = pr p <++> "import " ++ pr n ++ " = " ++ pr ln ++ pr_importList vs ++ ";"
-  pr (Replaceable n) = "replaceable type " ++ pr n ++ " subtypeof Any;"
+  pr (Replaceable n) = "replaceable type " ++ pr n ++ ";"
   pr (TypeAlias a b) = "type " ++ pr a ++ " = " ++ pr b ++ ";"
 
 pr_importList :: Either Wild [Var] -> String
@@ -55,6 +55,7 @@ pr_list :: Print p => [p] -> String
 pr_list ps = "{" ++ (intercalate ", " . map pr $ ps) ++ "}"
 
 pr_polyList :: Print p => [p] -> String
+pr_polyList [] = ""
 pr_polyList ps = "<" ++ (intercalate ", " . map pr $ ps) ++ ">"
 
 pr_docstr :: Maybe DocString -> String
