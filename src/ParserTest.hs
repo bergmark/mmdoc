@@ -150,6 +150,9 @@ parserExpected = [
       , FunProtPart $ PartFn Nothing "G" [] Nothing []
       ] []
     ]
+  , "Not" `tup` [
+      func "f" [StmtExp $ UnaryApp "not" (EVar "y")]
+    ]
   ] where tup = (,)
 
 instance IsString Name

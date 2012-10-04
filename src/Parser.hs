@@ -188,6 +188,7 @@ p_param T.Output = Output <$> (eat >>= p_vardecl)
 p_param _ = throwErr $ ExpectedTok [T.Input, T.Output]
 
 p_stmt :: TParser Stmt
+p_stmt T.Not = StmtExp <$> (p_exp T.Not <* tok' T.Semi)
 p_stmt l@(T.W lhs) =
   look >>= \s -> case s of
     Just (T.S ":=") -> do
@@ -269,7 +270,8 @@ p_exp T.If = do
   tok' T.Else
   alt <- p_exp =<< eat
   return $ EIf (iff : eifs) alt
-p_exp _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If]
+p_exp T.Not = UnaryApp "not" <$> (p_exp =<< eat)
+p_exp _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If, T.Not]
 
 p_expif' :: TParser (Exp, Exp)
 p_expif' t = do

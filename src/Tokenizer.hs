@@ -30,6 +30,7 @@ data Token = Algorithm
            | Lt
            | MComment String
            | Match
+           | Not
            | Output
            | Package
            | ParenL
@@ -94,6 +95,7 @@ p_token =
     <|> try (str "import"       *> return Import)
     <|> try (str "input"        *> return Input)
     <|> try (str "match"        *> return Match)
+    <|> try (str "not"          *> return Not)
     <|> try (str "output"       *> return Output)
     <|> try (str "package"      *> return Package)
     <|> try (str "partial"      *> return Partial)
