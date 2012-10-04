@@ -62,10 +62,10 @@ warnTests :: FilePath -> String -> Test
 warnTests file name =
   testCase file $ do
     tokenize file name $
-      parse (\r -> do
+      parse $ \r -> do
         fmaybe (name `lookup` warnExpected)
           (fail $ name ++ " is missing in warnExpected")
-          (\exp -> assertEqual name exp (W.check r)))
+          (\exp -> assertEqual name (sort exp) $ sort (W.check r))
 
 mkTest :: Maybe [FilePath] -> (FilePath -> String -> Test) -> TestName -> FilePath -> IO Test
 mkTest fs p tgName dir = do
@@ -87,6 +87,9 @@ parse f toks =
       P.lastToken = lt
     , P.parseTokens = ts
     })) -> error $ show (perr, lt, take 3 ts)) f
+
+assertEqualSorted :: (Ord a, Show a) => String -> [a] -> [a] -> Assertion
+assertEqualSorted name xs ys = assertEqual name (sort xs) (sort ys)
 
 eq :: (Eq a, Show a) => String -> a -> a -> IO ()
 eq preface expected actual =

@@ -4,8 +4,8 @@ import           Warnings
 
 warnExpected :: [(String,[Warning])]
 warnExpected = [
-    "Protection" `tup` [ Unencapsulated "P"
+    "Protection" `tup` [ Unencapsulated "P", MissingDocstring "P"
                        , Unprotected "I"
-                       , Unprotected "f"
-                       , Unprotected "F"]
+                       , Unprotected "f", MissingDocstring "f"
+                       , Unprotected "F", MissingDocstring "F"]
   ] where tup = (,)

@@ -5,7 +5,6 @@ import           System.Environment
 
 import qualified Doc                 as D
 import qualified Parser              as P
-import           Print
 import qualified Tokenizer           as T
 import qualified Warn                as W
 
