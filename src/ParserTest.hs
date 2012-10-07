@@ -91,6 +91,7 @@ parserExpected = [
                           , Input (Type (qual ["A","B"]) [], "c")
                           , Input (Type (qual ["A","B"]) ["C"] , "d")
                           , Input (Type (qual ["A","B","C"]) [] , "d")
+                          , Input (Type "A" [qual ["B","C"]] , "d")
                           ] [] [
                             StmtExp (Funcall (qual ["A","B","c"]) [])
                           , StmtExp (EVar (qual ["A", "B", "c"]))
@@ -140,5 +141,6 @@ parserExpected = [
       StmtExp (InfixApp "or" (EVar "a") (EVar "b"))
     , StmtExp (InfixApp "and" (EVar "c") (EVar "d"))
     , StmtExp (InfixApp "or" (EVar "x") (InfixApp "and" (EVar "y") (EVar "z")))
+    , If [(InfixApp "and" (Funcall "f" [EVar "a"]) (Funcall "f" [EVar "b"]), [StmtExp (EVar "x")])] Nothing
     ]]
   ] where tup = (,)

@@ -151,11 +151,11 @@ p_importVarsList w@(T.W _) = do
   return $ var : vars
 p_importVarsList _ = throwErr $ ExpectedTok [T.ListEnd, anyW]
 
-p_polytypes :: TParser [Var]
+p_polytypes :: TParser [Name]
 p_polytypes T.Lt = eat >>= p_polytypes
 p_polytypes T.Gt = return []
 p_polytypes w@(T.W _) = do
-  t <- p_var w
+  t <- p_name w
   ts <- eat >>= p_polytypes
   return (t:ts)
 p_polytypes _ = throwErr $ ExpectedTok [T.Lt, T.Gt, anyW]
@@ -236,45 +236,57 @@ p_if' t = do
   return (pred, stmts)
 
 p_exp :: TParser Exp
-p_exp T.Match = do
-  mvar <- p_var =<< eat
-  cases <- many (== T.Case) p_match_case
-  tok' T.End
-  tok' T.Match
-  return $ Match [mvar] cases
-p_exp w@(T.W _) = do
-  n <- p_name w
-  s <- look
-  case s of
-    Just T.ParenL -> do
-      tok' T.ParenL
-      args <- option (not . (== T.ParenR)) (eat >>= p_expList)
-      tok' T.ParenR
-      return $ Funcall n (fromMaybe [] args)
-    Just (T.S _) -> do
-      op <- t_s'
-      e <- p_exp =<< eat
-      return $ InfixApp op (EVar n) e
-    _ -> return $ EVar n
-p_exp T.ParenL = do
-  lookIs T.ParenR >>= \b -> if b
-    then eat >> return Unit
-    else do
-      ts <- commaSep T.ParenR p_exp =<< eat
-      tok' T.ParenR
-      return (Tuple ts)
-p_exp (T.S "-") = do
-  e <- eat >>= p_exp
-  return $ UnaryApp "-" e
-p_exp T.If = do
-  iff <- p_expif' =<< eat
-  eifs <- many (== T.Elseif) (const $ eat >>= p_expif')
-  tok' T.Else
-  alt <- p_exp =<< eat
-  return $ EIf (iff : eifs) alt
-p_exp T.Not = UnaryApp "not" <$> (p_exp =<< eat)
-p_exp (T.Str s) = return $ Str s
-p_exp _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If, T.Not]
+p_exp t = do
+  e <- p_exp' t
+  l <- look
+  case l of
+    Just (T.S _) -> p_infixApp e =<< eat
+    _ -> return e
+  where
+    p_infixApp :: Exp -> TParser Exp
+    p_infixApp e1 (T.S sym) = InfixApp sym e1 <$> (p_exp =<< eat)
+    p_infixApp _ _ = throwErr $ ExpectedTok [anyS]
+
+    p_exp' :: TParser Exp
+    p_exp' T.Match = do
+      mvar <- p_var =<< eat
+      cases <- many (== T.Case) p_match_case
+      tok' T.End
+      tok' T.Match
+      return $ Match [mvar] cases
+    p_exp' w@(T.W _) = do
+      n <- p_name w
+      s <- look
+      case s of
+        Just T.ParenL -> do
+          tok' T.ParenL
+          args <- option (not . (== T.ParenR)) (eat >>= p_expList)
+          tok' T.ParenR
+          return $ Funcall n (fromMaybe [] args)
+        Just (T.S _) -> do
+          op <- t_s'
+          e <- p_exp =<< eat
+          return $ InfixApp op (EVar n) e
+        _ -> return $ EVar n
+    p_exp' T.ParenL = do
+      lookIs T.ParenR >>= \b -> if b
+        then eat >> return Unit
+        else do
+          ts <- commaSep T.ParenR p_exp =<< eat
+          tok' T.ParenR
+          return (Tuple ts)
+    p_exp' (T.S "-") = do
+      e <- eat >>= p_exp
+      return $ UnaryApp "-" e
+    p_exp' T.If = do
+      iff <- p_expif' =<< eat
+      eifs <- many (== T.Elseif) (const $ eat >>= p_expif')
+      tok' T.Else
+      alt <- p_exp =<< eat
+      return $ EIf (iff : eifs) alt
+    p_exp' T.Not = UnaryApp "not" <$> (p_exp =<< eat)
+    p_exp' (T.Str s) = return $ Str s
+    p_exp' _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If, T.Not]
 
 p_expif' :: TParser (Exp, Exp)
 p_expif' t = do

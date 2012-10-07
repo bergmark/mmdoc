@@ -6,7 +6,7 @@ import qualified Tokenizer as T
 
 data AST = Comment String  -- //
          | Constant Type Var Exp
-         | Function (Maybe Protection) Name [Var] (Maybe DocString) [Param] [FunProt] [Stmt]
+         | Function (Maybe Protection) Name [Name] (Maybe DocString) [Param] [FunProt] [Stmt]
          | Import (Maybe Protection) Name (Maybe Name) (Either Wild [Var])
          | MComment String -- /* */
          | Package (Maybe Protection) Name (Maybe DocString) [AST]
@@ -42,7 +42,7 @@ protectAst _p ast = error $ "protectAst cannot protect " ++ show ast
 protectPartFn :: Protection -> PartFn -> PartFn
 protectPartFn p (PartFn _ a b c d) = PartFn (Just p) a b c d
 
-data PartFn = PartFn (Maybe Protection) Name [Var] (Maybe DocString) [Param]
+data PartFn = PartFn (Maybe Protection) Name [Name] (Maybe DocString) [Param]
   deriving (Eq, Show)
 
 data Protection = Protected | Public | Encapsulated
@@ -90,7 +90,7 @@ type VarDecl = (Type, Var)
 
 type DocString = String
 type Var = String
-data Type = Type Name [Var]
+data Type = Type Name [Name]
   deriving (Eq, Show)
 type Op = String
 

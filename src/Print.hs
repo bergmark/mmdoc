@@ -81,7 +81,7 @@ instance Print Param where
   pr (Output vd) = "output " ++ pr vd
 
 instance Print Type where
-  pr (Type n ns) = pr n ++ (if null ns then "" else "<" ++ (intercalate ", " ns) ++ ">")
+  pr (Type n ns) = pr n ++ (if null ns then "" else "<" ++ (intercalate ", " $ map pr ns) ++ ">")
 
 instance Print Var where
   pr = id

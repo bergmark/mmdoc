@@ -10,7 +10,7 @@ check = concatMap (\ast -> checkProtection ast ++ checkDocstring ast ++ checkStm
 
 checkProtection :: AST -> [Warning]
 checkProtection (Import Nothing n _ (Left Wild)) = return $ W.Unprotected (pr n)
-checkProtection (Function Nothing n _ _ _ _ stmts) = return $ W.Unprotected (pr n)
+checkProtection (Function Nothing n _ _ _ _ _) = return $ W.Unprotected (pr n)
 checkProtection (Package Nothing n _ cs) = W.Unencapsulated (pr n) : concatMap checkProtection cs
 checkProtection (ASTPartFn (PartFn Nothing n _ _ _)) = return $ W.Unprotected (pr n)
 checkProtection _ = []

@@ -18,7 +18,12 @@ main = do
     Right ts -> do
       p <- P.parse ts
       case p of
-        Left err -> putStrLn "---- parse error:" >> print err
+        Left err -> do
+          putStrLn "---- parse error:"
+          case err of
+            P.ParseError perr (P.ParseState { P.lastToken = lt, P.parseTokens = ts' }) ->
+              error $ show (perr, lt, take 5 ts')
+
         Right ast -> do
           let ws = W.check ast
           if (not . null) ws
