@@ -25,12 +25,8 @@ parserExpected = [
   , "MatchPats" `tup` [func "f" [
                         Assign ["res"] (Match ["x"] [Case (Tuple [EVar "_", EVar "_"]) (EVar "a")])
                       ]]
-  , "Comment" `tup` [Comment " foo", Package Nothing "Package" Nothing [Comment " bar"]]
   , "UnionType" `tup` [Package Nothing "P" Nothing [Union "U" Nothing []]]
   , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [(ty "Integer","a"), (ty "String","b")]]]
-  , "MComment" `tup` [ MComment "\nhej\npackage Foo\n"
-                     , Package Nothing "F" Nothing [MComment " end F; "]
-                     , MComment "*\n * hej\n "]
   , "Import" `tup` [Package Nothing "I" Nothing [
                        Import Nothing "X"    Nothing       (Left Wild)
                      , Import prot    "Y"    Nothing       (Left Wild)
@@ -143,4 +139,5 @@ parserExpected = [
     , StmtExp (InfixApp "or" (EVar "x") (InfixApp "and" (EVar "y") (EVar "z")))
     , If [(InfixApp "and" (Funcall "f" [EVar "a"]) (Funcall "f" [EVar "b"]), [StmtExp (EVar "x")])] Nothing
     ]]
+  , "SkipComment" `tup` [func "f" [StmtExp $ EVar "x"]]
   ] where tup = (,)

@@ -429,7 +429,9 @@ eat :: Parse Token
 eat = do
   t:ts <- gets parseTokens
   modify (\s -> s { parseTokens = ts, lastToken = Just t })
-  return t
+  if T.isComment t || T.isMComment t
+    then eat
+    else return t
 
 skip :: Parse ()
 skip = void eat
