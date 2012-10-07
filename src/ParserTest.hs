@@ -21,10 +21,16 @@ parserExpected = [
                                ]
   , "Match" `tup` [Package Nothing "Package" Nothing
                     [func "f" [
-                      Assign ["x"] (Match ["y"] [Case (EVar "z") (EVar "w")])]]]
+                      Assign ["x"] (Match ["y"] [] [Case (EVar "z") (EVar "w")])]]]
   , "MatchPats" `tup` [func "f" [
-                        Assign ["res"] (Match ["x"] [Case (Tuple [EVar "_", EVar "_"]) (EVar "a")])
+                        Assign ["res"] (Match ["x"] [] [Case (Tuple [EVar "_", EVar "_"]) (EVar "a")])
                       ]]
+  , "MatchLocal" `tup` [func "f" [
+                         Assign ["res"] (Match ["x"] [(ty "A", "y")] [Case (EVar "_") (EVar "y")])
+                       , Assign ["res"] (Match ["x"]
+                           [(ty "A", "a1"),(ty "A", "a2"),(ty "B", "b")]
+                           [Case (EVar "_") (EVar "y")])
+                       ]]
   , "UnionType" `tup` [Package Nothing "P" Nothing [Union "U" Nothing []]]
   , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [(ty "Integer","a"), (ty "String","b")]]]
   , "Import" `tup` [Package Nothing "I" Nothing [

@@ -250,10 +250,11 @@ p_exp t = do
     p_exp' :: TParser Exp
     p_exp' T.Match = do
       mvar <- p_var =<< eat
+      locals <- optionWith [] (== T.Local) (tok' T.Local >> p_vardecls)
       cases <- many (== T.Case) p_match_case
       tok' T.End
       tok' T.Match
-      return $ Match [mvar] cases
+      return $ Match [mvar] locals cases
     p_exp' w@(T.W _) = do
       n <- p_name w
       s <- look

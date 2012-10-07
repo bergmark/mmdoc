@@ -25,6 +25,7 @@ data Token = Algorithm
            | If
            | Import
            | Input
+           | Local
            | ListEnd
            | ListStart
            | Lt
@@ -98,6 +99,7 @@ p_token =
     <|> try (strSep "if"           *> return If)
     <|> try (strSep "import"       *> return Import)
     <|> try (strSep "input"        *> return Input)
+    <|> try (strSep "local"        *> return Local)
     <|> try (strSep "match"        *> return Match)
     <|> try (strSep "not"          *> return Not)
     <|> try (strSep "output"       *> return Output)

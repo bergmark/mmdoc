@@ -71,7 +71,7 @@ data FunProt = FunProtVar VarDecl
 
 data Exp = EIf [(Exp,Exp)] Exp
          | EVar Name
-         | Match [Var] [Case]
+         | Match [Var] [VarDecl] [Case]
          | Funcall Name [Exp]
          | InfixApp Op Exp Exp
          | UnaryApp Op Exp
@@ -91,7 +91,7 @@ type VarDecl = (Type, Var)
 type DocString = String
 type Var = String
 data Type = Type Name [Name]
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 type Op = String
 
 data Name = UnQual String
