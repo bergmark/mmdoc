@@ -134,13 +134,12 @@ p_importVars _ = throwErr $ ExpectedTok [T.S "*", T.ListStart]
 
 p_importVarsList :: TParser [Var]
 p_importVarsList T.ListEnd = return []
-p_importVarsList w@(T.W _) = do
-  var <- p_var w
-  c <- tokM T.Comma
-  vars <- case c of
-    Just _ -> eat >>= p_importVarsList
-    Nothing -> tok' T.ListEnd >> return []
-  return $ var : vars
+p_importVarsList w@(T.W _) =
+  (:) <$> p_var w <*> (do
+    c <- tokM T.Comma
+    case c of
+      Just _ -> eat >>= p_importVarsList
+      Nothing -> tok' T.ListEnd >> return [])
 p_importVarsList _ = throwErr $ ExpectedTok [T.ListEnd, anyW]
 
 p_polytypes :: TParser [Name]
@@ -288,11 +287,7 @@ p_exp t = do
     p_exp' _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If, T.S "not", T.ListStart]
 
 p_expList :: TParser [Exp]
-p_expList t = do
-  e <- p_exp t
-  es <- optionWith (return []) (== T.Comma) (tok' T.Comma >> eat >>= p_expList)
-  return (e:es)
--- (:) <$> p_exp t <*> optionWith (return []) (== T.Comma) ((p_expList =<< eat) <* eat)
+p_expList t = (:) <$> p_exp t <*> optionWith (return []) (== T.Comma) (eat >> eat >>= p_expList)
 
 p_match_case :: TParser Case
 p_match_case T.Case = do
