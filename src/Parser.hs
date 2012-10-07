@@ -74,7 +74,7 @@ p_ast T.Constant = do
   return $ Constant ty var exp
 p_ast T.Function = do
   name <- p_name =<< eat
-  qs <- optionWith [] (== T.Lt) (eat >>= p_polytypes)
+  qs <- optionWith [] (== T.S "<") (eat >>= p_polytypes)
   doc <- p_docstr
   params <- many T.isInputOutput p_param
   prots <- optionWith [] (== T.Protected) (eat >> p_funprots)
@@ -152,19 +152,19 @@ p_importVarsList w@(T.W _) = do
 p_importVarsList _ = throwErr $ ExpectedTok [T.ListEnd, anyW]
 
 p_polytypes :: TParser [Name]
-p_polytypes T.Lt = eat >>= p_polytypes
-p_polytypes T.Gt = return []
+p_polytypes (T.S "<") = eat >>= p_polytypes
+p_polytypes (T.S ">") = return []
 p_polytypes w@(T.W _) = do
   t <- p_name w
   ts <- eat >>= p_polytypes
   return (t:ts)
-p_polytypes _ = throwErr $ ExpectedTok [T.Lt, T.Gt, anyW]
+p_polytypes _ = throwErr $ ExpectedTok [T.S "<", T.S ">", anyW]
 
 p_partfn :: TParser PartFn
 p_partfn T.Partial = do
   tok' T.Function
   name <- p_name =<< eat
-  qs <- optionWith [] (== T.Lt) (eat >>= p_polytypes)
+  qs <- optionWith [] (== T.S "<") (eat >>= p_polytypes)
   doc <- p_docstr
   params <- many T.isInputOutput p_param
   tok' T.End
@@ -347,7 +347,7 @@ p_vardecl _ = throwErr $ ExpectedTok [anyW]
 p_type :: TParser Type
 p_type w@(T.W _) = do
   n <- p_name w
-  qs <- optionWith [] (== T.Lt) (eat >>= p_polytypes)
+  qs <- optionWith [] (== T.S "<") (eat >>= p_polytypes)
   return $ Type n qs
 p_type _ = throwErr $ ExpectedTok [anyW]
 

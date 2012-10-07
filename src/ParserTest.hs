@@ -69,10 +69,17 @@ parserExpected = [
   , "TypeAlias" `tup` [TypeAlias "X" "Y"]
   , "Underscores" `tup` [func "f" [Assign ["_"] "x"]]
   , "Operators" `tup` [func "f" [
-                        StmtExp (InfixApp "+&" "a" "b")
-                      , StmtExp (InfixApp "/" "c" "d")
-                      , StmtExp (InfixApp "*" "e" "f")
-                      , StmtExp (InfixApp "*" "e" (InfixApp "/" "g" "h"))
+                        StmtExp $ InfixApp "+&" "a" "b"
+                      , StmtExp $ InfixApp "/" "c" "d"
+                      , StmtExp $ InfixApp "*" "e" "f"
+                      , StmtExp $ InfixApp "*" "e" $ InfixApp "/" "g" "h"
+                      , StmtExp $ InfixApp "<=" "a" "b"
+                      , StmtExp $ InfixApp "<" "a" "b"
+                      , StmtExp $ InfixApp "<>" "a" "b"
+                      , StmtExp $ InfixApp ">" "a" "b"
+                      , StmtExp $ InfixApp ">=" "a" "b"
+                      , StmtExp $ InfixApp "=" "a" "b"
+                      , StmtExp $ InfixApp "==" "a" "b"
                       ]]
   , "Tuples" `tup` [func "f" [
                      Assign ["x","y"] (Tuple ["z", "w"])

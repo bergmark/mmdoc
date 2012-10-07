@@ -21,14 +21,12 @@ data Token = Algorithm
            | Encapsulated
            | End
            | Function
-           | Gt
            | If
            | Import
            | Input
            | Local
            | ListEnd
            | ListStart
-           | Lt
            | MComment String
            | Match
            | Not
@@ -82,8 +80,6 @@ p_token =
     <|> char ')'                *> return ParenR
     <|> char ','                *> return Comma
     <|> char '.'                *> return Dot
-    <|> char '<'                *> return Lt
-    <|> char '>'                *> return Gt
     <|> char '{'                *> return ListStart
     <|> char '}'                *> return ListEnd
     <|> try (Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n")))
@@ -113,7 +109,7 @@ p_token =
     <|> try (strSep "uniontype"    *> return Union)
     <|> Str <$> between (char '"') (char '"')
           (concat <$> many (try (string "\\\"") <|> many1 (noneOf "\\\"")))
-    <|> S <$> (try (string "and") <|> try (string "or") <|> many1 (oneOf "+&*+:=/-"))
+    <|> S <$> (try (string "and") <|> try (string "or") <|> many1 (oneOf "+&*+:=/-<>"))
     <|> W <$> many1 wordChar
   where
     wordChar = letter <|> digit <|> char '_'
