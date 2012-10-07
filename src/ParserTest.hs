@@ -17,19 +17,19 @@ parserExpected = [
                            , Output (ty "Boolean","b2")] [] []
                            ]]
   , "FunctionStatements" `tup` [Package Nothing "Package" Nothing [
-                                 func "f" [Assign ["x"] (EVar "y"),Assign ["aoeu123"] (EVar "aoeu123")]]
+                                 func "f" [Assign ["x"] "y",Assign ["aoeu123"] "aoeu123"]]
                                ]
   , "Match" `tup` [Package Nothing "Package" Nothing
                     [func "f" [
-                      Assign ["x"] (Match ["y"] [] [Case (EVar "z") (EVar "w")])]]]
+                      Assign ["x"] (Match ["y"] [] [Case "z" "w"])]]]
   , "MatchPats" `tup` [func "f" [
-                        Assign ["res"] (Match ["x"] [] [Case (Tuple [EVar "_", EVar "_"]) (EVar "a")])
+                        Assign ["res"] (Match ["x"] [] [Case (Tuple ["_", "_"]) "a"])
                       ]]
   , "MatchLocal" `tup` [func "f" [
-                         Assign ["res"] (Match ["x"] [(ty "A", "y")] [Case (EVar "_") (EVar "y")])
+                         Assign ["res"] (Match ["x"] [(ty "A", "y")] [Case "_" "y"])
                        , Assign ["res"] (Match ["x"]
                            [(ty "A", "a1"),(ty "A", "a2"),(ty "B", "b")]
-                           [Case (EVar "_") (EVar "y")])
+                           [Case "_" "y"])
                        ]]
   , "UnionType" `tup` [Package Nothing "P" Nothing [Union "U" Nothing []]]
   , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [(ty "Integer","a"), (ty "String","b")]]]
@@ -60,34 +60,34 @@ parserExpected = [
       Function Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a"), Output (ty "A", "b")] [] []
     , ASTPartFn $ PartFn Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a")]
     ]
-  , "StandAloneStmt" `tup` [func "f" [StmtExp (EVar "stmt")]]
+  , "StandAloneStmt" `tup` [func "f" [StmtExp "stmt"]]
   , "Funcall" `tup` [func "f" [
                       StmtExp (Funcall "f" [])
                     , Assign ["x"] (Funcall "f" [])
-                    , StmtExp (Funcall "g" [Funcall "f" [], EVar "x", EVar "y"])
+                    , StmtExp (Funcall "g" [Funcall "f" [], "x", "y"])
                     ]]
   , "TypeAlias" `tup` [TypeAlias "X" "Y"]
-  , "Underscores" `tup` [func "f" [Assign ["_"] (EVar "x")]]
+  , "Underscores" `tup` [func "f" [Assign ["_"] "x"]]
   , "Operators" `tup` [func "f" [
-                        StmtExp (InfixApp "+&" (EVar "a") (EVar "b"))
-                      , StmtExp (InfixApp "/" (EVar "c") (EVar "d"))
-                      , StmtExp (InfixApp "*" (EVar "e") (EVar "f"))
-                      , StmtExp (InfixApp "*" (EVar "e") (InfixApp "/" (EVar "g") (EVar "h")))
+                        StmtExp (InfixApp "+&" "a" "b")
+                      , StmtExp (InfixApp "/" "c" "d")
+                      , StmtExp (InfixApp "*" "e" "f")
+                      , StmtExp (InfixApp "*" "e" (InfixApp "/" "g" "h"))
                       ]]
   , "Tuples" `tup` [func "f" [
-                     Assign ["x","y"] (Tuple [EVar "z",EVar "w"])
+                     Assign ["x","y"] (Tuple ["z", "w"])
                    ]]
   , "Unit" `tup` [func "f" [Assign ["x"] Unit]]
-  , "IfStmt" `tup` [func "f" [If [(InfixApp "==" (EVar "x") (EVar "y"), [Assign ["a"] (EVar "b")])] Nothing]]
+  , "IfStmt" `tup` [func "f" [If [(InfixApp "==" "x" "y", [Assign ["a"] "b"])] Nothing]]
   , "IfElseifElse" `tup` [func "f" [
                            If [
-                             (InfixApp "==" (EVar "x") (EVar "y"), [Assign ["a"] (EVar "b")])
-                           , (EVar "z", [StmtExp (EVar "c"), StmtExp (EVar "d")])
-                           ] (Just [StmtExp (EVar "e"), StmtExp (EVar "f")])
+                             (InfixApp "==" "x" "y", [Assign ["a"] "b"])
+                           , (EVar "z", [StmtExp "c", StmtExp "d"])
+                           ] (Just [StmtExp "e", StmtExp "f"])
                           ]]
   , "Integer" `tup` [func "f" [
-                      Assign ["x"] (InfixApp "+" (EVar "1") (EVar "2"))
-                    , Assign ["y"] (UnaryApp "-" (EVar "3"))
+                      Assign ["x"] (InfixApp "+" "1" "2")
+                    , Assign ["y"] (UnaryApp "-" "3")
                     ]]
   , "QualifiedName" `tup` [Function Nothing "f" [] Nothing [
                             Input (Type "A" [] , "b")
@@ -100,11 +100,11 @@ parserExpected = [
                           , StmtExp (EVar (qual ["A", "B", "c"]))
                           ]]
   , "IfExpr" `tup` [func "f" [
-                     Assign ["r"] (EIf [(InfixApp "==" (EVar "x") (EVar "y"), EVar "a")] (EVar "b"))
+                     Assign ["r"] (EIf [(InfixApp "==" "x" "y", "a")] "b")
                    , Assign ["r"] (EIf [
-                       (InfixApp "==" (EVar "x") (EVar "y"), EVar "a")
-                     , (InfixApp "==" (EVar "z") (EVar "w"), EVar "b")
-                     ] (EVar "c"))
+                       (InfixApp "==" "x" "y", "a")
+                     , (InfixApp "==" "z" "w", "b")
+                     ] "c")
                    ]]
   , "Protection" `tup` [
       Package  Nothing "P" Nothing []
@@ -122,7 +122,7 @@ parserExpected = [
     , Function prot "f" [] Nothing [] [] []
     , Import   prot "I" Nothing (Left Wild)
     ]
-  , "Constant" `tup` [Constant (ty "Integer") "i" (EVar "3")]
+  , "Constant" `tup` [Constant (ty "Integer") "i" "3"]
   , "FunProtected" `tup` [
       Function Nothing "f" [] Nothing [] [] []
     , Function Nothing "g" [] Nothing [] [
@@ -132,7 +132,7 @@ parserExpected = [
       ] []
     ]
   , "Not" `tup` [
-      func "f" [StmtExp $ UnaryApp "not" (EVar "y")]
+      func "f" [StmtExp $ UnaryApp "not" "y"]
     ]
   , "StrExp" `tup` [
       func "f" [StmtExp $ Str "str"]
@@ -141,11 +141,11 @@ parserExpected = [
      Function Nothing "f" [] Nothing [] [FunProtVar (ty "Integer", "x"),FunProtVar (ty "Integer", "y")] []
     ]
   , "BoolOp" `tup` [func "f" [
-      StmtExp (InfixApp "or" (EVar "a") (EVar "b"))
-    , StmtExp (InfixApp "and" (EVar "c") (EVar "d"))
-    , StmtExp (InfixApp "or" (EVar "x") (InfixApp "and" (EVar "y") (EVar "z")))
-    , If [(InfixApp "and" (Funcall "f" [EVar "a"]) (Funcall "f" [EVar "b"]), [StmtExp (EVar "x")])] Nothing
+      StmtExp $ InfixApp "or" "a" "b"
+    , StmtExp $ InfixApp "and" "c" "d"
+    , StmtExp $ InfixApp "or" "x" $ InfixApp "and" "y" "z"
+    , If [(InfixApp "and" (Funcall "f" ["a"]) (Funcall "f" ["b"]), [StmtExp ("x")])] Nothing
     ]]
-  , "SkipComment" `tup` [func "f" [StmtExp $ EVar "x"]]
-  , "List" `tup` [func "f" [StmtExp $ List [], StmtExp $ List [EVar "1", EVar "2", EVar "3"]]]
+  , "SkipComment" `tup` [func "f" [StmtExp $ "x"]]
+  , "List" `tup` [func "f" [StmtExp $ List [], StmtExp $ List ["1", "2", "3"]]]
   ] where tup = (,)

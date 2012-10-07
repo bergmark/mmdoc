@@ -5,8 +5,11 @@ module TestHelp where
 import           Data.String
 import           Types
 
-instance IsString Name
-  where fromString = UnQual
+instance IsString Name where
+  fromString = UnQual
+
+instance IsString Exp where
+  fromString = EVar . fromString
 
 ty :: Name -> Type
 ty n = Type n []
