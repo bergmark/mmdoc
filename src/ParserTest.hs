@@ -43,7 +43,8 @@ parserExpected = [
                             , Output (ty "Integer", "b")
                             ]]
   , "ReplaceableType" `tup` [Replaceable "Element"]
-  , "Strings" `tup` [Package Nothing "P" (Just "P doc string") [
+  , "String" `tup` [func "f" [StmtExp $ Str "x y z", StmtExp $ Str "1 \\\" 2"]]
+  , "Docstring" `tup` [Package Nothing "P" (Just "P doc string") [
                       Function Nothing "f" [] (Just "f doc\n  string") [] [] []
                     , Union "U" (Just "U docstring") []
                     , Union "W" Nothing []

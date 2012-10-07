@@ -19,5 +19,4 @@ partial function F
   input String x;
 end F;
 
-
 end P;

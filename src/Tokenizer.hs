@@ -109,7 +109,8 @@ p_token =
     <|> try (strSep "then"         *> return Then)
     <|> try (strSep "type"         *> return Type)
     <|> try (strSep "uniontype"    *> return Union)
-    <|> Str <$> between (char '"') (char '"') (many $ noneOf "\"")
+    <|> Str <$> between (char '"') (char '"')
+          (concat <$> many (try (string "\\\"") <|> many1 (noneOf "\\\"")))
     <|> S <$> (try (string "and") <|> try (string "or") <|> many1 (oneOf "+&*+:=/-"))
     <|> W <$> many1 wordChar
   where
