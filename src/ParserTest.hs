@@ -147,4 +147,5 @@ parserExpected = [
     , If [(InfixApp "and" (Funcall "f" [EVar "a"]) (Funcall "f" [EVar "b"]), [StmtExp (EVar "x")])] Nothing
     ]]
   , "SkipComment" `tup` [func "f" [StmtExp $ EVar "x"]]
+  , "List" `tup` [func "f" [StmtExp $ List [], StmtExp $ List [EVar "1", EVar "2", EVar "3"]]]
   ] where tup = (,)

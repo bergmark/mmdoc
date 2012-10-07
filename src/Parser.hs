@@ -191,6 +191,7 @@ p_param _ = throwErr $ ExpectedTok [T.Input, T.Output]
 p_stmt :: TParser Stmt
 p_stmt T.Not = StmtExp <$> (p_exp T.Not <* tok' T.Semi)
 p_stmt s@(T.Str _) = StmtExp <$> (p_exp s <* tok' T.Semi)
+p_stmt T.ListStart = StmtExp <$> p_exp T.ListStart <* tok' T.Semi
 p_stmt l@(T.W lhs) =
   look >>= \s -> case s of
     Just (T.S ":=") -> do
@@ -215,7 +216,7 @@ p_stmt T.If = do
   elsestmt <- option (== T.Else) (tok' T.Else >> many (/= T.End) p_stmt)
   tok' T.End >> tok' T.If >> tok' T.Semi
   return $ If (iff : eifs) elsestmt
-p_stmt _ = throwErr $ ExpectedTok [anyW, T.ParenL, T.If]
+p_stmt _ = throwErr $ ExpectedTok [anyW, T.ParenL, T.If, anyStr]
 
 commaSep :: Token -> TParser a -> TParser [a]
 commaSep endt pel  t = do
@@ -287,7 +288,8 @@ p_exp t = do
       return $ EIf (iff : eifs) alt
     p_exp' T.Not = UnaryApp "not" <$> (p_exp =<< eat)
     p_exp' (T.Str s) = return $ Str s
-    p_exp' _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If, T.Not]
+    p_exp' T.ListStart = List <$> optionWith [] (/= T.ListEnd) (commaSep T.ListEnd p_exp =<< eat) <* tok' T.ListEnd
+    p_exp' _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If, T.Not, T.ListStart]
 
 p_expif' :: TParser (Exp, Exp)
 p_expif' t = do

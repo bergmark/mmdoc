@@ -78,6 +78,7 @@ data Exp = EIf [(Exp,Exp)] Exp
          | Str String
          | Tuple [Exp]
          | Unit -- ()
+         | List [Exp]
          -- TODO List
   deriving (Eq, Ord, Show)
 
