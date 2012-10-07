@@ -2,7 +2,7 @@
 
 module WarnTest where
 
-import           TestHelp ()
+import           TestHelp
 import qualified Types    as T
 import           Warnings
 
@@ -13,4 +13,5 @@ warnExpected = [
                        , Unprotected "f", MissingDocstring "f"
                        , Unprotected "F", MissingDocstring "F"]
   , "StmtExp" `tup` [StmtExp $ T.Funcall "f" []]
+  , "Nesting" `tup` [Unencapsulated "P", Unprotected "f", MissingDocstring "f"]
   ] where tup = (,)
