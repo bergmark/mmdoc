@@ -62,9 +62,14 @@ p_top :: Parse [AST]
 p_top = many isAstStart p_ast
 
 p_ast :: TParser AST
-p_ast (T.Comment s) = return $ Comment s
+p_ast (T.Comment  s) = return $ Comment s
 p_ast (T.MComment s) = return $ MComment s
-p_ast T.Package = p_package T.Package
+p_ast T.Package      = p_package T.Package
+p_ast T.Partial      = ASTPartFn <$> p_partfn T.Partial
+p_ast T.Protected    = protectAst Protected    <$> (p_ast =<< eat)
+p_ast T.Public       = protectAst Public       <$> (p_ast =<< eat)
+p_ast T.Encapsulated = protectAst Encapsulated <$> (p_package =<< eat)
+p_ast T.Import       = p_import T.Import
 p_ast T.Constant = do
   ty <- p_type =<< eat
   var <- p_var =<< eat
@@ -74,17 +79,16 @@ p_ast T.Constant = do
   return $ Constant ty var exp
 p_ast T.Function = do
   name <- p_name =<< eat
-  qs <- optionWith [] (== T.S "<") (eat >>= p_polytypes)
+  qs <- optionWith (return []) (== T.S "<") (eat >>= p_polytypes)
   doc <- p_docstr
   params <- many T.isInputOutput p_param
-  prots <- optionWith [] (== T.Protected) (eat >> p_funprots)
+  prots <- optionWith (return []) (== T.Protected) (eat >> p_funprots)
   tok' T.Algorithm
   stmts <- many (/= T.End) p_stmt
   tok' T.End
   void $ p_name =<< eat
   tok' T.Semi
   return $ Function Nothing name qs doc params prots stmts
-p_ast T.Partial = ASTPartFn <$> p_partfn T.Partial
 p_ast T.Union = do
   name <- p_name =<< eat
   doc <- p_docstr
@@ -93,20 +97,8 @@ p_ast T.Union = do
   void $ p_name =<< eat
   tok' T.Semi
   return $ Union name doc recs
-p_ast T.Protected = do
-  eat >>= p_ast >>= return . protectAst Protected
-p_ast T.Public = do
-  eat >>= p_ast >>= return . protectAst Public
-p_ast T.Encapsulated = do
-  eat >>= p_package >>= return . protectAst Encapsulated
-p_ast (T.W "replaceable") = do
-  tok' T.Type
-  name <- p_name =<< eat
-  void $ t_w "subtypeof"
-  void $ t_w "Any"
-  tok' T.Semi
-  return $ Replaceable name
-p_ast T.Import = p_import T.Import
+p_ast (T.W "replaceable") =
+  Replaceable <$> (tok' T.Type *> (p_name =<< eat) <* t_w "subtypeof" <* t_w "Any" <* tok' T.Semi)
 p_ast T.Type = do
   a <- p_name =<< eat
   void $ t_s "="
@@ -154,17 +146,14 @@ p_importVarsList _ = throwErr $ ExpectedTok [T.ListEnd, anyW]
 p_polytypes :: TParser [Name]
 p_polytypes (T.S "<") = eat >>= p_polytypes
 p_polytypes (T.S ">") = return []
-p_polytypes w@(T.W _) = do
-  t <- p_name w
-  ts <- eat >>= p_polytypes
-  return (t:ts)
+p_polytypes w@(T.W _) = (:) <$> p_name w <*> (p_polytypes =<< eat)
 p_polytypes _ = throwErr $ ExpectedTok [T.S "<", T.S ">", anyW]
 
 p_partfn :: TParser PartFn
 p_partfn T.Partial = do
   tok' T.Function
   name <- p_name =<< eat
-  qs <- optionWith [] (== T.S "<") (eat >>= p_polytypes)
+  qs <- optionWith (return []) (== T.S "<") (eat >>= p_polytypes)
   doc <- p_docstr
   params <- many T.isInputOutput p_param
   tok' T.End
@@ -251,7 +240,7 @@ p_exp t = do
     p_exp' :: TParser Exp
     p_exp' T.Match = do
       mvar <- p_var =<< eat
-      locals <- optionWith [] (== T.Local) (tok' T.Local >> p_vardecls)
+      locals <- optionWith (return []) (== T.Local) (tok' T.Local >> p_vardecls)
       cases <- many (== T.Case) p_match_case
       tok' T.End
       tok' T.Match
@@ -283,27 +272,27 @@ p_exp t = do
       tok' T.Else
       alt <- p_exp =<< eat
       return $ EIf (iff : eifs) alt
+        where
+          p_expif' :: TParser (Exp, Exp)
+          p_expif' t' = do
+            pred <- p_exp t'
+            tok' T.Then
+            exp <- eat >>= p_exp
+            return (pred, exp)
+
     p_exp' (T.S "not") = UnaryApp "not" <$> (p_exp =<< eat)
     p_exp' (T.S "-") = UnaryApp "-" <$> (p_exp =<< eat)
     p_exp' (T.Str s) = return $ Str s
-    p_exp' T.ListStart = List <$> optionWith [] (/= T.ListEnd) (commaSep T.ListEnd p_exp =<< eat) <* tok' T.ListEnd
+    p_exp' T.ListStart =
+      List <$> optionWith (return []) (/= T.ListEnd) (commaSep T.ListEnd p_exp =<< eat) <* tok' T.ListEnd
     p_exp' _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If, T.S "not", T.ListStart]
-
-p_expif' :: TParser (Exp, Exp)
-p_expif' t = do
-  pred <- p_exp t
-  tok' T.Then
-  exp <- eat >>= p_exp
-  return (pred, exp)
 
 p_expList :: TParser [Exp]
 p_expList t = do
   e <- p_exp t
-  comma <- tokM T.Comma
-  es <- case comma of
-    Just _ -> eat >>= p_expList
-    Nothing -> return []
-  return $ e:es
+  es <- optionWith (return []) (== T.Comma) (tok' T.Comma >> eat >>= p_expList)
+  return (e:es)
+-- (:) <$> p_exp t <*> optionWith (return []) (== T.Comma) ((p_expList =<< eat) <* eat)
 
 p_match_case :: TParser Case
 p_match_case T.Case = do
@@ -345,7 +334,7 @@ p_vardecl _ = throwErr $ ExpectedTok [anyW]
 p_type :: TParser Type
 p_type w@(T.W _) = do
   n <- p_name w
-  qs <- optionWith [] (== T.S "<") (eat >>= p_polytypes)
+  qs <- optionWith (return []) (== T.S "<") (eat >>= p_polytypes)
   return $ Type n qs
 p_type _ = throwErr $ ExpectedTok [anyW]
 
@@ -465,8 +454,8 @@ option pred p =
     Just v | pred v -> p >>= return . Just
     _ -> return Nothing
 
-optionWith :: a -> (Token -> Bool) -> Parse a -> Parse a
-optionWith def pred p = fromMaybe def <$> option pred p
+optionWith :: Parse a -> (Token -> Bool) -> Parse a -> Parse a
+optionWith def pred p = fromMaybe <$> def <*> option pred p
 
 -- Misc
 
