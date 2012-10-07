@@ -29,7 +29,6 @@ data Token = Algorithm
            | ListStart
            | MComment String
            | Match
-           | Not
            | Output
            | Package
            | ParenL
@@ -97,7 +96,6 @@ p_token =
     <|> try (strSep "input"        *> return Input)
     <|> try (strSep "local"        *> return Local)
     <|> try (strSep "match"        *> return Match)
-    <|> try (strSep "not"          *> return Not)
     <|> try (strSep "output"       *> return Output)
     <|> try (strSep "package"      *> return Package)
     <|> try (strSep "partial"      *> return Partial)
@@ -109,7 +107,10 @@ p_token =
     <|> try (strSep "uniontype"    *> return Union)
     <|> Str <$> between (char '"') (char '"')
           (concat <$> many (try (string "\\\"") <|> many1 (noneOf "\\\"")))
-    <|> S <$> (try (string "and") <|> try (string "or") <|> many1 (oneOf "+&*+:=/-<>"))
+    <|> S <$> (try (string "and")
+            <|> try (string "or")
+            <|> try (string "not")
+            <|> many1 (oneOf "+&*+:=/-<>"))
     <|> W <$> many1 wordChar
   where
     wordChar = letter <|> digit <|> char '_'

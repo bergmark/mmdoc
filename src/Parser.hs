@@ -189,8 +189,8 @@ p_param T.Output = Output . head <$> (eat >>= p_vardecl)
 p_param _ = throwErr $ ExpectedTok [T.Input, T.Output]
 
 p_stmt :: TParser Stmt
-p_stmt T.Not = StmtExp <$> (p_exp T.Not <* tok' T.Semi)
-p_stmt s@(T.Str _) = StmtExp <$> (p_exp s <* tok' T.Semi)
+p_stmt (T.S "not") = StmtExp <$> p_exp (T.S "not") <* tok' T.Semi
+p_stmt s@(T.Str _) = StmtExp <$> p_exp s <* tok' T.Semi
 p_stmt T.ListStart = StmtExp <$> p_exp T.ListStart <* tok' T.Semi
 p_stmt l@(T.W lhs) =
   look >>= \s -> case s of
@@ -277,19 +277,17 @@ p_exp t = do
           ts <- commaSep T.ParenR p_exp =<< eat
           tok' T.ParenR
           return (Tuple ts)
-    p_exp' (T.S "-") = do
-      e <- eat >>= p_exp
-      return $ UnaryApp "-" e
     p_exp' T.If = do
       iff <- p_expif' =<< eat
       eifs <- many (== T.Elseif) (const $ eat >>= p_expif')
       tok' T.Else
       alt <- p_exp =<< eat
       return $ EIf (iff : eifs) alt
-    p_exp' T.Not = UnaryApp "not" <$> (p_exp =<< eat)
+    p_exp' (T.S "not") = UnaryApp "not" <$> (p_exp =<< eat)
+    p_exp' (T.S "-") = UnaryApp "-" <$> (p_exp =<< eat)
     p_exp' (T.Str s) = return $ Str s
     p_exp' T.ListStart = List <$> optionWith [] (/= T.ListEnd) (commaSep T.ListEnd p_exp =<< eat) <* tok' T.ListEnd
-    p_exp' _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If, T.Not, T.ListStart]
+    p_exp' _ = throwErr $ ExpectedTok [T.Match, anyW, T.ParenL, T.S "-", T.If, T.S "not", T.ListStart]
 
 p_expif' :: TParser (Exp, Exp)
 p_expif' t = do
