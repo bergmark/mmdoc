@@ -45,7 +45,7 @@ data Token = Algorithm
            | Union
 
            | Str String
-           | S String -- Symbol
+           | S String -- Infix operator, including "or" and "and"
            | W String -- Word
            | EOF
              deriving (Eq, Show)
@@ -106,5 +106,5 @@ p_token =
     <|> try (str "type"         *> return Type)
     <|> try (str "uniontype"    *> return Union)
     <|> Str <$> between (char '"') (char '"') (many $ noneOf "\"")
-    <|> S <$> many1 (oneOf "+&*+:=/-")
+    <|> S <$> (try (string "and") <|> try (string "or") <|> many1 (oneOf "+&*+:=/-"))
     <|> W <$> many1 (letter <|> digit <|> char '_')

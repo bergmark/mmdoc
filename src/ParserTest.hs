@@ -136,4 +136,9 @@ parserExpected = [
   , "VarDeclMultiple" `tup` [
      Function Nothing "f" [] Nothing [] [FunProtVar (ty "Integer", "x"),FunProtVar (ty "Integer", "y")] []
     ]
+  , "BoolOp" `tup` [func "f" [
+      StmtExp (InfixApp "or" (EVar "a") (EVar "b"))
+    , StmtExp (InfixApp "and" (EVar "c") (EVar "d"))
+    , StmtExp (InfixApp "or" (EVar "x") (InfixApp "and" (EVar "y") (EVar "z")))
+    ]]
   ] where tup = (,)
