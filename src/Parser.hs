@@ -1,6 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TupleSections              #-}
 
 module Parser where
 
@@ -170,7 +171,7 @@ p_partfn T.Partial = do
   void $ p_name =<< eat
   tok' T.Semi
   return $ PartFn Nothing name qs doc params
-
+p_partfn _ = throwErr $ ExpectedTok [T.Partial]
 
 p_record :: TParser Record
 p_record T.Record = do
@@ -180,11 +181,11 @@ p_record T.Record = do
   void $ p_name =<< eat
   tok' T.Semi
   return $ Record name vardecls
-p_record _ = throwErr (ExpectedTok [T.Record])
+p_record _ = throwErr $ ExpectedTok [T.Record]
 
 p_param :: TParser Param
-p_param T.Input = Input <$> (eat >>= p_vardecl)
-p_param T.Output = Output <$> (eat >>= p_vardecl)
+p_param T.Input = Input   . head <$> (eat >>= p_vardecl)
+p_param T.Output = Output . head <$> (eat >>= p_vardecl)
 p_param _ = throwErr $ ExpectedTok [T.Input, T.Output]
 
 p_stmt :: TParser Stmt
@@ -312,20 +313,20 @@ p_funprots = do
       fps <- p_funprots
       return $ FunProtPart fp : fps
     Just (T.W _) -> do
-      fp <- eat >>= p_vardecl
-      fps <- p_funprots
-      return $ FunProtVar fp : fps
+      vds <- eat >>= p_vardecl
+      rest <- p_funprots
+      return $ map FunProtVar vds ++ rest
     _ -> return []
 
 p_vardecls :: Parse [VarDecl]
-p_vardecls = many T.isW p_vardecl
+p_vardecls = concat <$> many T.isW p_vardecl
 
-p_vardecl :: TParser VarDecl
+p_vardecl :: TParser [VarDecl]
 p_vardecl n@(T.W _) = do
   typ <- p_type n
-  var <- t_word
+  vars <- commaSep T.Semi p_var =<< eat
   tok' T.Semi
-  return (typ, var)
+  return $ map (typ,) vars
 p_vardecl _ = throwErr $ ExpectedTok [anyW]
 
 p_type :: TParser Type

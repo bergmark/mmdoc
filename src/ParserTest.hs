@@ -133,4 +133,7 @@ parserExpected = [
   , "StrExp" `tup` [
       func "f" [StmtExp $ Str "str"]
     ]
+  , "VarDeclMultiple" `tup` [
+     Function Nothing "f" [] Nothing [] [FunProtVar (ty "Integer", "x"),FunProtVar (ty "Integer", "y")] []
+    ]
   ] where tup = (,)
