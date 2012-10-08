@@ -11,10 +11,10 @@ parserExpected = [
   , "Function" `tup` [Package Nothing "Package" Nothing [func "f" []]]
   , "FunctionArgs" `tup` [Package Nothing "Package" Nothing
                            [Function Nothing "f" [] Nothing [
-                             Input (ty "Integer", "x")
-                           , Input (ty "Integer","y")
-                           , Output (ty "Boolean","b1")
-                           , Output (ty "Boolean","b2")] [] []
+                             Input ("Integer", "x")
+                           , Input ("Integer","y")
+                           , Output ("Boolean","b1")
+                           , Output ("Boolean","b2")] [] []
                            ]]
   , "FunctionStatements" `tup` [Package Nothing "Package" Nothing [
                                  func "f" [Assign ["x"] "y",Assign ["aoeu123"] "aoeu123"]]
@@ -26,9 +26,9 @@ parserExpected = [
                         Assign ["res"] (Match ["x"] [] [Case (Tuple ["_", "_"]) "a"] Nothing)
                       ]]
   , "MatchLocal" `tup` [func "f" [
-                         Assign ["res"] (Match ["x"] [(ty "A", "y")] [Case "_" "y"] Nothing)
+                         Assign ["res"] (Match ["x"] [("A", "y")] [Case "_" "y"] Nothing)
                        , Assign ["res"] (Match ["x"]
-                           [(ty "A", "a1"),(ty "A", "a2"),(ty "B", "b")]
+                           [("A", "a1"),("A", "a2"),("B", "b")]
                            [Case "_" "y"]
                            Nothing)
                        ]]
@@ -39,7 +39,7 @@ parserExpected = [
                         Assign ["res"] $ Match ["a","b","c"] [] [Case "_" Unit] (Just Unit)
                       ]]
   , "UnionType" `tup` [Package Nothing "P" Nothing [Union "U" Nothing []]]
-  , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [(ty "Integer","a"), (ty "String","b")]]]
+  , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [("Integer","a"), ("String","b")]]]
   , "Import" `tup` [Package Nothing "I" Nothing [
                        Import Nothing "X"    Nothing       (Left Wild)
                      , Import prot    "Y"    Nothing       (Left Wild)
@@ -52,8 +52,8 @@ parserExpected = [
                        ]]
   , "EncapsulatedPackage" `tup` [Package enca "P" Nothing []]
   , "PartialFunction" `tup` [partfn "X" [
-                              Input (ty "Integer", "a")
-                            , Output (ty "Integer", "b")
+                              Input ("Integer", "a")
+                            , Output ("Integer", "b")
                             ]]
   , "ReplaceableType" `tup` [Replaceable "Element"]
   , "String" `tup` [func "f" [StmtExp $ Str "x y z", StmtExp $ Str "1 \\\" 2"]]
@@ -61,13 +61,13 @@ parserExpected = [
                       Function Nothing "f" [] (Just "f doc\n  string") [] [] []
                     , Union "U" (Just "U docstring") []
                     , Union "W" Nothing []
-                    , ASTPartFn $ PartFn Nothing "F" [] (Just "F docstring") [Input (ty "String", "x")]
+                    , ASTPartFn $ PartFn Nothing "F" [] (Just "F docstring") [Input ("String", "x")]
                     ]]
   , "PolyType" `tup` [
-      Function Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a"), Output (ty "A", "b")] [] []
+      Function Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a"), Output ("A", "b")] [] []
     , ASTPartFn $ PartFn Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a")]
     , Function Nothing "f" ["A","B"] Nothing [Output (Type "Tuple" ["A","B"], "v")] [] []
-    , ASTPartFn $ PartFn Nothing "f" ["A"] Nothing [Output (Type "List" [Type "List" [ty "A"]], "v")]
+    , ASTPartFn $ PartFn Nothing "f" ["A"] Nothing [Output (Type "List" [Type "List" ["A"]], "v")]
     ]
   , "StandAloneStmt" `tup` [func "f" [StmtExp "stmt"]]
   , "Funcall" `tup` [func "f" [
@@ -138,12 +138,12 @@ parserExpected = [
     , Function prot "f" [] Nothing [] [] []
     , Import   prot "I" Nothing (Left Wild)
     ]
-  , "Constant" `tup` [Constant (ty "Integer") "i" "3"]
+  , "Constant" `tup` [Constant ("Integer") "i" "3"]
   , "FunProtected" `tup` [
       Function Nothing "f" [] Nothing [] [] []
     , Function Nothing "g" [] Nothing [] [
-        FunProtVar (ty "Integer", "x")
-      , FunProtVar (ty "String", "y")
+        FunProtVar ("Integer", "x")
+      , FunProtVar ("String", "y")
       , FunProtPart $ PartFn Nothing "G" [] Nothing []
       ] []
     ]
@@ -154,7 +154,7 @@ parserExpected = [
       func "f" [StmtExp $ Str "str"]
     ]
   , "VarDeclMultiple" `tup` [
-     Function Nothing "f" [] Nothing [] [FunProtVar (ty "Integer", "x"),FunProtVar (ty "Integer", "y")] []
+     Function Nothing "f" [] Nothing [] [FunProtVar ("Integer", "x"),FunProtVar ("Integer", "y")] []
     ]
   , "BoolOp" `tup` [func "f" [
       StmtExp $ InfixApp "or" "a" "b"

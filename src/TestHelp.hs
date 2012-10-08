@@ -4,9 +4,6 @@ module TestHelp where
 
 import           Types
 
-ty :: Name -> Type
-ty n = Type n []
-
 func :: Name -> [Stmt] -> AST
 func n s = Function Nothing n [] Nothing [] [] s
 
