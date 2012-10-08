@@ -2,7 +2,6 @@
 
 module WarnTest where
 
-import           TestHelp
 import qualified Types    as T
 import           Warnings
 

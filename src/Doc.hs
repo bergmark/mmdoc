@@ -8,3 +8,4 @@ generate = concatMap generate'
 
 generate' :: AST -> String
 generate' p@(Package _ _ _ _) = pr p
+

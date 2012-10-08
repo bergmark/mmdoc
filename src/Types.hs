@@ -1,8 +1,9 @@
 module Types where
 
-import           Prelude   hiding (exp)
+import           Data.String
+import           Prelude     hiding (exp)
 
-import qualified Tokenizer as T
+import qualified Tokenizer   as T
 
 data AST = Comment String  -- //
          | Constant Type Var Exp
@@ -82,6 +83,9 @@ data Exp = EIf [(Exp,Exp)] Exp
          -- TODO List
   deriving (Eq, Ord, Show)
 
+instance IsString Exp where
+  fromString = EVar . fromString
+
 type Pat = Exp
 
 data Record = Record Name [VarDecl]
@@ -98,3 +102,6 @@ type Op = String
 data Name = UnQual String
           | Qual Name String
   deriving (Eq, Ord, Show)
+
+instance IsString Name where
+  fromString = UnQual
