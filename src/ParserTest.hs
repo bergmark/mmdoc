@@ -75,7 +75,10 @@ parserExpected = [
                     , Assign ["x"] (Funcall "f" [])
                     , StmtExp (Funcall "g" [Funcall "f" [], "x", "y"])
                     ]]
-  , "TypeAlias" `tup` [TypeAlias "X" "Y"]
+  , "TypeAlias" `tup` [
+      TypeAlias "X" "Y"
+    , TypeAlias "X" $ Type "Tuple" [Type "Array" ["A"], "B"]
+    ]
   , "Underscores" `tup` [func "f" [Assign ["_"] "x"]]
   , "Operators" `tup` [func "f" [
                         StmtExp $ InfixApp "+&" "a" "b"

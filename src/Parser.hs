@@ -102,7 +102,7 @@ p_ast (T.W "replaceable") =
 p_ast T.Type = do
   a <- p_name =<< eat
   void $ t_s "="
-  b <- p_name =<< eat
+  b <- p_type =<< eat
   tok' T.Semi
   return $ TypeAlias a b
 p_ast _ = throwErr $ UnsupportedAstToken

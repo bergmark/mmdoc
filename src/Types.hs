@@ -14,7 +14,7 @@ data AST = Comment String  -- //
          | Package (Maybe Protection) Name (Maybe DocString) [AST]
          | ASTPartFn PartFn
          | Replaceable Name
-         | TypeAlias Name Name
+         | TypeAlias Name Type
          | Union Name (Maybe DocString) [Record]
   deriving (Eq, Show)
 
