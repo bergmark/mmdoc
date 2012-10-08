@@ -21,19 +21,22 @@ parserExpected = [
                                ]
   , "Match" `tup` [Package Nothing "Package" Nothing
                     [func "f" [
-                      Assign ["x"] (Match ["y"] [] [Case "z" "w"])]]]
+                      Assign ["x"] (Match ["y"] [] [Case "z" "w"] Nothing)]]]
   , "MatchPats" `tup` [func "f" [
-                        Assign ["res"] (Match ["x"] [] [Case (Tuple ["_", "_"]) "a"])
+                        Assign ["res"] (Match ["x"] [] [Case (Tuple ["_", "_"]) "a"] Nothing)
                       ]]
   , "MatchLocal" `tup` [func "f" [
-                         Assign ["res"] (Match ["x"] [(ty "A", "y")] [Case "_" "y"])
+                         Assign ["res"] (Match ["x"] [(ty "A", "y")] [Case "_" "y"] Nothing)
                        , Assign ["res"] (Match ["x"]
                            [(ty "A", "a1"),(ty "A", "a2"),(ty "B", "b")]
-                           [Case "_" "y"])
+                           [Case "_" "y"]
+                           Nothing)
                        ]]
   , "MatchArgs" `tup` [func "f" [
-                        Assign ["res"] $ Match ["a","b","c"] []
-                          [Case "_" Unit]
+                        Assign ["res"] $ Match ["a","b","c"] [] [Case "_" Unit] Nothing
+                      ]]
+  , "MatchElse" `tup` [func "f" [
+                        Assign ["res"] $ Match ["a","b","c"] [] [Case "_" Unit] (Just Unit)
                       ]]
   , "UnionType" `tup` [Package Nothing "P" Nothing [Union "U" Nothing []]]
   , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [(ty "Integer","a"), (ty "String","b")]]]

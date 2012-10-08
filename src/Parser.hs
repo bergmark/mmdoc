@@ -241,9 +241,10 @@ p_exp t = do
       mvars <- p_matchvars =<< eat
       locals <- optionWith (return []) (== T.Local) (tok' T.Local >> p_vardecls)
       cases <- many (== T.Case) p_match_case
+      els <- option (== T.Else) ((tok' T.Else >> eat >>= p_exp) <* tok' T.Semi)
       tok' T.End
       tok' T.Match
-      return $ Match mvars locals cases
+      return $ Match mvars locals cases els
         where
           p_matchvars :: TParser [Var]
           p_matchvars T.ParenL = -- commaSep T.ParenR p_var =<< eat
