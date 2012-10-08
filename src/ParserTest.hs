@@ -31,6 +31,10 @@ parserExpected = [
                            [(ty "A", "a1"),(ty "A", "a2"),(ty "B", "b")]
                            [Case "_" "y"])
                        ]]
+  , "MatchArgs" `tup` [func "f" [
+                        Assign ["res"] $ Match ["a","b","c"] []
+                          [Case "_" Unit]
+                      ]]
   , "UnionType" `tup` [Package Nothing "P" Nothing [Union "U" Nothing []]]
   , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [(ty "Integer","a"), (ty "String","b")]]]
   , "Import" `tup` [Package Nothing "I" Nothing [

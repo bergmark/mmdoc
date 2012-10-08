@@ -238,12 +238,22 @@ p_exp t = do
 
     p_exp' :: TParser Exp
     p_exp' T.Match = do
-      mvar <- p_var =<< eat
+      mvars <- p_matchvars =<< eat
       locals <- optionWith (return []) (== T.Local) (tok' T.Local >> p_vardecls)
       cases <- many (== T.Case) p_match_case
       tok' T.End
       tok' T.Match
-      return $ Match [mvar] locals cases
+      return $ Match mvars locals cases
+        where
+          p_matchvars :: TParser [Var]
+          p_matchvars T.ParenL = -- commaSep T.ParenR p_var =<< eat
+            lookIs T.ParenR >>= \b -> if b
+              then eat >> return []
+              else do
+                ts <- commaSep T.ParenR p_var =<< eat
+                tok' T.ParenR
+                return ts
+          p_matchvars t' = (:[]) <$> p_var t'
     p_exp' w@(T.W _) = do
       n <- p_name w
       s <- look
@@ -278,7 +288,6 @@ p_exp t = do
             tok' T.Then
             exp <- eat >>= p_exp
             return (pred, exp)
-
     p_exp' (T.S "not") = UnaryApp "not" <$> (p_exp =<< eat)
     p_exp' (T.S "-") = UnaryApp "-" <$> (p_exp =<< eat)
     p_exp' (T.Str s) = return $ Str s
