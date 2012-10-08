@@ -98,7 +98,7 @@ parserExpected = [
   , "IfElseifElse" `tup` [func "f" [
                            If [
                              (InfixApp "==" "x" "y", [Assign ["a"] "b"])
-                           , (EVar "z", [StmtExp "c", StmtExp "d"])
+                           , ("z", [StmtExp "c", StmtExp "d"])
                            ] (Just [StmtExp "e", StmtExp "f"])
                           ]]
   , "Integer" `tup` [func "f" [
@@ -106,14 +106,14 @@ parserExpected = [
                     , Assign ["y"] (UnaryApp "-" "3")
                     ]]
   , "QualifiedName" `tup` [Function Nothing "f" [] Nothing [
-                            Input (Type "A" [] , "b")
-                          , Input (Type (qual ["A","B"]) [], "c")
-                          , Input (Type (qual ["A","B"]) ["C"] , "d")
-                          , Input (Type (qual ["A","B","C"]) [] , "d")
+                            Input (Type "A" [], "b")
+                          , Input (Type "A.B" [], "c")
+                          , Input (Type "A.B" ["C"] , "d")
+                          , Input (Type "A.B.C" [] , "d")
                           , Input (Type "A" ["B.C"] , "d")
                           ] [] [
-                            StmtExp (Funcall (qual ["A","B","c"]) [])
-                          , StmtExp (EVar (qual ["A", "B", "c"]))
+                            StmtExp (Funcall "A.B.c" [])
+                          , StmtExp "A.B.c"
                           ]]
   , "IfExpr" `tup` [func "f" [
                      Assign ["r"] (EIf [(InfixApp "==" "x" "y", "a")] "b")
