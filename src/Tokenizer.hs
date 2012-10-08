@@ -27,6 +27,7 @@ data Token = Algorithm
            | Local
            | ListEnd
            | ListStart
+           | Matchcontinue
            | MComment String
            | Match
            | Output
@@ -95,6 +96,7 @@ p_token =
     <|> try (strSep "import"       *> return Import)
     <|> try (strSep "input"        *> return Input)
     <|> try (strSep "local"        *> return Local)
+    <|> try (strSep "matchcontinue"*> return Matchcontinue)
     <|> try (strSep "match"        *> return Match)
     <|> try (strSep "output"       *> return Output)
     <|> try (strSep "package"      *> return Package)
