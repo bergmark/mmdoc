@@ -178,24 +178,28 @@ p_stmt :: TParser Stmt
 p_stmt (T.S "not") = StmtExp <$> p_exp (T.S "not") <* tok' T.Semi
 p_stmt s@(T.Str _) = StmtExp <$> p_exp s <* tok' T.Semi
 p_stmt T.ListStart = StmtExp <$> p_exp T.ListStart <* tok' T.Semi
-p_stmt l@(T.W lhs) =
+p_stmt l@(T.W _) = do
+  exp1 <- p_exp l
   look >>= \s -> case s of
-    Just (T.S ":=") -> do
+    Just (T.Assign) -> do
       void $ eat
-      exp <- p_exp =<< eat
+      exp2 <- p_exp =<< eat
       tok' T.Semi
-      return (Assign [lhs] exp)
+      return (Assign exp1 exp2)
     _ -> do
-      exp <- p_exp l
       tok' T.Semi
-      return (StmtExp exp)
+      return (StmtExp exp1)
 p_stmt T.ParenL = do
-  lhs <- commaSep T.ParenR p_var =<< eat
-  tok' T.ParenR
-  tok' (T.S ":=")
-  exp <- p_exp =<< eat
-  tok' T.Semi
-  return (Assign lhs exp)
+  exp1 <- p_exp T.ParenL
+  look >>= \s -> case s of
+    Just T.Assign -> do
+      void $ eat
+      exp2 <- p_exp =<< eat
+      tok' T.Semi
+      return (Assign exp1 exp2)
+    _ -> do
+      tok' T.Semi
+      return (StmtExp exp1)
 p_stmt T.If = do
   iff <- p_if' =<< eat
   eifs <- many (== T.Elseif) (const $ eat >>= p_if')

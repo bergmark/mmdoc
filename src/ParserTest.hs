@@ -17,26 +17,26 @@ parserExpected = [
                            , Output ("Boolean","b2")] [] []
                            ]]
   , "FunctionStatements" `tup` [Package Nothing "Package" Nothing [
-                                 func "f" [Assign ["x"] "y",Assign ["aoeu123"] "aoeu123"]]
+                                 func "f" [Assign "x" "y", Assign "aoeu123" "aoeu123"]]
                                ]
   , "Match" `tup` [Package Nothing "Package" Nothing
                     [func "f" [
-                      Assign ["x"] (Match ["y"] [] [Case "z" "w"] Nothing)]]]
+                      Assign "x" (Match ["y"] [] [Case "z" "w"] Nothing)]]]
   , "MatchPats" `tup` [func "f" [
-                        Assign ["res"] (Match ["x"] [] [Case (Tuple ["_", "_"]) "a"] Nothing)
+                        Assign "res" (Match ["x"] [] [Case (Tuple ["_", "_"]) "a"] Nothing)
                       ]]
   , "MatchLocal" `tup` [func "f" [
-                         Assign ["res"] (Match ["x"] [("A", "y")] [Case "_" "y"] Nothing)
-                       , Assign ["res"] (Match ["x"]
+                         Assign "res" (Match ["x"] [("A", "y")] [Case "_" "y"] Nothing)
+                       , Assign "res" (Match ["x"]
                            [("A", "a1"),("A", "a2"),("B", "b")]
                            [Case "_" "y"]
                            Nothing)
                        ]]
   , "MatchArgs" `tup` [func "f" [
-                        Assign ["res"] $ Match ["a","b","c"] [] [Case "_" Unit] Nothing
+                        Assign "res" $ Match ["a","b","c"] [] [Case "_" Unit] Nothing
                       ]]
   , "MatchElse" `tup` [func "f" [
-                        Assign ["res"] $ Match ["a","b","c"] [] [Case "_" Unit] (Just Unit)
+                        Assign "res" $ Match ["a","b","c"] [] [Case "_" Unit] (Just Unit)
                       ]]
   , "UnionType" `tup` [Package Nothing "P" Nothing [Union "U" Nothing []]]
   , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [("Integer","a"), ("String","b")]]]
@@ -72,14 +72,14 @@ parserExpected = [
   , "StandAloneStmt" `tup` [func "f" [StmtExp "stmt"]]
   , "Funcall" `tup` [func "f" [
                       StmtExp (Funcall "f" [])
-                    , Assign ["x"] (Funcall "f" [])
+                    , Assign "x" (Funcall "f" [])
                     , StmtExp (Funcall "g" [Funcall "f" [], "x", "y"])
                     ]]
   , "TypeAlias" `tup` [
       TypeAlias "X" "Y"
     , TypeAlias "X" $ Type "Tuple" [Type "Array" ["A"], "B"]
     ]
-  , "Underscores" `tup` [func "f" [Assign ["_"] "x"]]
+  , "Underscores" `tup` [func "f" [Assign "_" "x"]]
   , "Operators" `tup` [func "f" [
                         StmtExp $ InfixApp "+&" "a" "b"
                       , StmtExp $ InfixApp "/" "c" "d"
@@ -94,19 +94,19 @@ parserExpected = [
                       , StmtExp $ InfixApp "==" "a" "b"
                       ]]
   , "Tuples" `tup` [func "f" [
-                     Assign ["x","y"] (Tuple ["z", "w"])
+                     Assign (Tuple ["x","y"]) (Tuple ["z", "w"])
                    ]]
-  , "Unit" `tup` [func "f" [Assign ["x"] Unit]]
-  , "IfStmt" `tup` [func "f" [If [(InfixApp "==" "x" "y", [Assign ["a"] "b"])] Nothing]]
+  , "Unit" `tup` [func "f" [Assign "x" Unit]]
+  , "IfStmt" `tup` [func "f" [If [(InfixApp "==" "x" "y", [Assign "a" "b"])] Nothing]]
   , "IfElseifElse" `tup` [func "f" [
                            If [
-                             (InfixApp "==" "x" "y", [Assign ["a"] "b"])
+                             (InfixApp "==" "x" "y", [Assign "a" "b"])
                            , ("z", [StmtExp "c", StmtExp "d"])
                            ] (Just [StmtExp "e", StmtExp "f"])
                           ]]
   , "Integer" `tup` [func "f" [
-                      Assign ["x"] (InfixApp "+" "1" "2")
-                    , Assign ["y"] (UnaryApp "-" "3")
+                      Assign "x" (InfixApp "+" "1" "2")
+                    , Assign "y" (UnaryApp "-" "3")
                     ]]
   , "QualifiedName" `tup` [Function Nothing "f" [] Nothing [
                             Input ("A", "b")
@@ -119,8 +119,8 @@ parserExpected = [
                           , StmtExp "A.B.c"
                           ]]
   , "IfExpr" `tup` [func "f" [
-                     Assign ["r"] (EIf [(InfixApp "==" "x" "y", "a")] "b")
-                   , Assign ["r"] (EIf [
+                     Assign "r" (EIf [(InfixApp "==" "x" "y", "a")] "b")
+                   , Assign "r" (EIf [
                        (InfixApp "==" "x" "y", "a")
                      , (InfixApp "==" "z" "w", "b")
                      ] "c")
@@ -168,4 +168,9 @@ parserExpected = [
   , "SkipComment" `tup` [func "f" [StmtExp $ "x"]]
   , "List" `tup` [func "f" [StmtExp $ List [], StmtExp $ List ["1", "2", "3"]]]
   , "For" `tup` [func "f" [For "i" (InfixApp ":" "1" "n") ["x"]]]
+  , "Assign" `tup` [func "f" [
+      Assign "x" "a"
+    , Assign (Tuple ["x", "y"]) (Tuple ["a", "b"])
+    , Assign (Tuple [Tuple ["x", "y"], "z"]) (Tuple [Tuple ["a", "b"], "c"])
+    ]]
   ] where tup = (,)

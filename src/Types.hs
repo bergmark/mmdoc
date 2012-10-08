@@ -59,7 +59,7 @@ data Param = Input VarDecl
            | Output VarDecl
   deriving (Eq, Show)
 
-data Stmt = Assign [Var] Exp
+data Stmt = Assign Exp Exp
           | StmtExp Exp
           | If [(Exp,[Stmt])] (Maybe [Stmt])
           | For Var Exp [Stmt]

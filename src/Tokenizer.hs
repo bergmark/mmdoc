@@ -11,6 +11,7 @@ data Program = Program [Token]
              deriving (Eq, Show)
 
 data Token = Algorithm
+           | Assign
            | Case
            | Comma
            | Comment String
@@ -88,6 +89,7 @@ p_token =
     <|> char '}'                *> return ListEnd
     <|> try (Comment <$> (str "//" *> many1 (noneOf "\r\n") <* many1 (oneOf "\r\n")))
     <|> try (fmap MComment $ str "/*" *> manyTill (noneOf "_") (try (string "*/")))
+    <|> try (strSep ":="           *> return Assign)
     <|> try (strSep "algorithm"    *> return Algorithm)
     <|> try (strSep "case"         *> return Case)
     <|> try (strSep "constant"     *> return Constant)
