@@ -4,4 +4,4 @@ algorithm
     case _ then ();
     else ();
   end match;
-end repeat_tail;
+end f;

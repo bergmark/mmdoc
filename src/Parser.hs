@@ -404,22 +404,24 @@ throwErr perr = do
   s <- gets id
   throwError $ ParseError perr s
 
+-- Looks ahead and gets the first non-comment token
 look :: Parse (Maybe Token)
 look = do
-  s <- gets parseTokens
+  s <- dropWhile (\v -> T.isComment v || T.isMComment v) <$> gets parseTokens
   case s of
     [T.EOF] -> return Nothing
     (t:_) -> return (Just t)
     _ -> throwErr $ ExpectedTok [T.EOF]
 
 lookN :: Int -> Parse [Token]
-lookN n = take n <$> gets parseTokens
+lookN n = take n . filter (\v -> not $ T.isComment v || T.isMComment v) <$> gets parseTokens
 
 lookIs :: TParser Bool
 lookIs t = look >>= \s -> return (case s of
   Just x -> t == x
   Nothing -> False)
 
+-- Eats input and returns the first non comment
 eat :: Parse Token
 eat = do
   t:ts <- gets parseTokens
