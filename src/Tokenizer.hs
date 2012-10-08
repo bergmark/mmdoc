@@ -20,6 +20,7 @@ data Token = Algorithm
            | Elseif
            | Encapsulated
            | End
+           | Equation
            | Function
            | If
            | Import
@@ -91,6 +92,7 @@ p_token =
     <|> try (strSep "elseif"       *> return Elseif)
     <|> try (strSep "else"         *> return Else)
     <|> try (strSep "end"          *> return End)
+    <|> try (strSep "equation"     *> return Equation)
     <|> try (strSep "function"     *> return Function)
     <|> try (strSep "if"           *> return If)
     <|> try (strSep "import"       *> return Import)
