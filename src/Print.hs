@@ -24,6 +24,7 @@ ind s = "  " ++ s
 
 (<++>) :: String -> String -> String
 (<++>) "" y = y
+(<++>) x "" = x
 (<++>) x  y = x ++ " " ++ y
 
 
@@ -81,8 +82,8 @@ instance Print VarDecl where
   pr (t, v) = pr t ++ " " ++ v
 
 instance Print Param where
-  pr (Input vd) = "input " ++ pr vd
-  pr (Output vd) = "output " ++ pr vd
+  pr (Input vd) = pr vd
+  pr (Output vd) = pr vd
 
 instance Print Type where
   pr (Type n ns) = pr n ++ (if null ns then "" else "<" ++ (intercalate ", " $ map pr ns) ++ ">")

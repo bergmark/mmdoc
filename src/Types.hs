@@ -64,6 +64,13 @@ data Param = Input VarDecl
            | Output VarDecl
   deriving (Eq, Show)
 
+isInput :: Param -> Bool
+isInput (Input {}) = True
+isInput _ = False
+isOutput :: Param -> Bool
+isOutput (Output {}) = True
+isOutput _ = False
+
 data Stmt = Assign Exp Exp
           | StmtExp Exp
           | If [(Exp,[Stmt])] (Maybe [Stmt])

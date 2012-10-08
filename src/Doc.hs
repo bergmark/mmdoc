@@ -2,9 +2,12 @@
 
 module Doc where
 
+import           Data.List
+import           Data.Maybe
+import           Data.Monoid
 import           Data.String
 import           Prelude                     hiding (div)
-import           Text.Blaze.Html5            hiding (head)
+import           Text.Blaze.Html5            hiding (head, map)
 import qualified Text.Blaze.Html5            as H
 import           Text.Blaze.Html5.Attributes
 import qualified Text.Blaze.Html5.Attributes as A
@@ -32,7 +35,21 @@ tos = fromString . pr
 astDoc :: AST -> Html
 astDoc c@(Comment      {}) = div ! class_ "comment" $ tos c
 astDoc c@(Constant     {}) = div ! class_ "constant" $ tos c
-astDoc c@(Function     {}) = div ! class_ "function" $ tos c
+astDoc (Function prot nam qs ds ps _ _) =
+  dl ! class_ (fromString $ "function" <++> pr prot) $ do
+    dt $ do
+      fromString $ if prot == Just Protected then "protected " else ""
+      "function "
+      tos nam
+      fromString . pr_polyList $ qs
+      "("
+      fromString . intercalate ", " . map (\(Input vd) -> pr vd) . filter isInput $ ps
+      ") => "
+      "("
+      fromString . intercalate ", " . map (\(Output vd) -> pr vd) . filter isOutput $ ps
+      ")"
+    dl $ fromString $ fromMaybe "<<Missing Docs>>" ds
+
 astDoc c@(MComment     {}) = div ! class_ "mcomment" $ tos c
 astDoc c@(ASTPartFn    {}) = div ! class_ "partfn" $ tos c
 astDoc c@(Replaceable  {}) = div ! class_ "replaceable" $ tos c
@@ -43,8 +60,11 @@ astDoc (Package _prot nam _doc imports contents) = do
     dt ! class_ "package" $ do
       code "package"
       code ! class_ "name" $ tos nam
-    dd ! class_ "imports" $ mapM_ astImportDoc imports
+    dd ! class_ "dependencies" $
+      dl $ do
+       dt "Dependencies"
+       dd $ mapM_ astImportDoc imports
     dd ! class_ "contents" $ mapM_ astDoc contents
 
 astImportDoc :: Import -> Html
-astImportDoc c@(Import {}) = div ! class_ "import" $ tos c
+astImportDoc c@(Import _ nam _ _) = div ! class_ "import" $ tos nam
