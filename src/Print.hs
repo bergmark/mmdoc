@@ -28,7 +28,8 @@ ind s = "  " ++ s
 
 
 instance Print AST where
-  pr (Package e n d cs) = concat [ pr e <++> "package " ++ pr n ++ "\n"
+  pr (Package e n d is cs) = concat [ pr e <++> "package " ++ pr n ++ "\n"
+                                 , concatLines pr is
                                  , pr_docstr d
                                  , concatLines pr cs
                                  , "\nend " ++ pr n ++ ";"]
@@ -42,10 +43,13 @@ instance Print AST where
                      ,   pr_docstr d ++ "\n"
                      ,   concatLines (ind . pr) rs
                      , "\nend " ++ pr n ++ ";"]
-  pr (Import p n Nothing vs)     = pr p <++> "import " ++ pr n ++ pr_importList vs ++ ";"
-  pr (Import p n (Just ln) vs)   = pr p <++> "import " ++ pr n ++ " = " ++ pr ln ++ pr_importList vs ++ ";"
   pr (Replaceable n) = "replaceable type " ++ pr n ++ ";"
   pr (TypeAlias a b) = "type " ++ pr a ++ " = " ++ pr b ++ ";"
+
+instance Print Import where
+  pr (Import p n Nothing vs)   = pr p <++> "import " ++ pr n ++ pr_importList vs ++ ";"
+  pr (Import p n (Just ln) vs) = pr p <++> "import " ++ pr n ++ " = " ++ pr ln ++ pr_importList vs ++ ";"
+
 
 instance Print PartFn where
   pr (PartFn p n qs d ps) = pr p <++> "partial function " ++ pr n ++ pr_polyList qs ++ "\n" ++ pr_docstr d ++ "\n" ++ concatLines (ind . pr) ps ++ "\nend " ++ pr n ++ ";"

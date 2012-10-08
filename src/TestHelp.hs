@@ -4,6 +4,9 @@ module TestHelp where
 
 import           Types
 
+pkg :: Name -> [AST] -> AST
+pkg n asts = Package Nothing n Nothing [] asts
+
 func :: Name -> [Stmt] -> AST
 func n s = Function Nothing n [] Nothing [] [] s
 

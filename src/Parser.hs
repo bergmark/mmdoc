@@ -69,7 +69,6 @@ p_ast T.Partial      = ASTPartFn <$> p_partfn T.Partial
 p_ast T.Protected    = protectAst Protected    <$> (p_ast =<< eat)
 p_ast T.Public       = protectAst Public       <$> (p_ast =<< eat)
 p_ast T.Encapsulated = protectAst Encapsulated <$> (p_package =<< eat)
-p_ast T.Import       = p_import T.Import
 p_ast T.Constant = do
   ty <- p_type =<< eat
   var <- p_var =<< eat
@@ -111,14 +110,26 @@ p_package :: TParser AST
 p_package T.Package = do
   name <- p_name =<< eat
   doc <- p_docstr
+  imports <- p_imports
   content <- p_top
   tok' T.End
   void $ p_name =<< eat
   tok' T.Semi
-  return $ Package Nothing name doc content
+  return $ Package Nothing name doc imports content
 p_package _ = throwErr $ ExpectedTok [T.Package]
 
-p_import :: TParser AST
+p_imports :: Parse [Import]
+p_imports = lookN 2 >>= \l -> case l of
+  [T.Import,_] -> (:) <$> (eat >>= p_import) <*> p_imports
+  [T.Protected,T.Import] -> do
+    tok' T.Protected
+    (:) . protectImport Protected <$> (eat >>= p_import) <*> p_imports
+  [T.Public,T.Import] -> do
+    tok' T.Public
+    (:) . protectImport Public <$> (eat >>= p_import) <*> p_imports
+  _ -> return []
+
+p_import :: TParser Import
 p_import T.Import = do
   name <- p_name =<< eat
   name' <- option (== T.S "=") (tok' (T.S "=") >> eat >>= p_name)

@@ -7,19 +7,19 @@ import           Types
 
 parserExpected :: [(String, [AST])]
 parserExpected = [
-    "Package" `tup` [Package Nothing "Package" Nothing []]
-  , "Function" `tup` [Package Nothing "Package" Nothing [func "f" []]]
-  , "FunctionArgs" `tup` [Package Nothing "Package" Nothing
+    "Package" `tup` [Package Nothing "Package" Nothing [] []]
+  , "Function" `tup` [pkg "Package" [Function Nothing "f" [] Nothing [] [] []]]
+  , "FunctionArgs" `tup` [pkg "Package"
                            [Function Nothing "f" [] Nothing [
                              Input ("Integer", "x")
                            , Input ("Integer","y")
                            , Output ("Boolean","b1")
                            , Output ("Boolean","b2")] [] []
                            ]]
-  , "FunctionStatements" `tup` [Package Nothing "Package" Nothing [
+  , "FunctionStatements" `tup` [pkg "Package" [
                                  func "f" [Assign "x" "y", Assign "aoeu123" "aoeu123"]]
                                ]
-  , "Match" `tup` [Package Nothing "Package" Nothing
+  , "Match" `tup` [pkg "Package"
                     [func "f" [
                       Assign "x" (Match ["y"] [] [Case "z" "w"] Nothing)]]]
   , "MatchPats" `tup` [func "f" [
@@ -38,26 +38,26 @@ parserExpected = [
   , "MatchElse" `tup` [func "f" [
                         Assign "res" $ Match ["a","b","c"] [] [Case "_" Unit] (Just Unit)
                       ]]
-  , "UnionType" `tup` [Package Nothing "P" Nothing [Union "U" Nothing []]]
+  , "UnionType" `tup` [pkg "P" [Union "U" Nothing []]]
   , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [("Integer","a"), ("String","b")]]]
   , "Import" `tup` [Package Nothing "I" Nothing [
                        Import Nothing "X"    Nothing       (Left Wild)
                      , Import prot    "Y"    Nothing       (Left Wild)
                      , Import Nothing "L"    (Just "Long") (Left Wild)
                      , Import prot    "Z"    Nothing       (Left Wild)
-                    ]]
+                    ] []]
   , "ImportList" `tup` [Package Nothing "I" Nothing [
                          Import Nothing "W"    Nothing       (Right [])
                        , Import Nothing "W"    Nothing       (Right ["a","b","cde"])
-                       ]]
-  , "EncapsulatedPackage" `tup` [Package enca "P" Nothing []]
+                       ] []]
+  , "EncapsulatedPackage" `tup` [Package enca "P" Nothing [] []]
   , "PartialFunction" `tup` [partfn "X" [
                               Input ("Integer", "a")
                             , Output ("Integer", "b")
                             ]]
   , "ReplaceableType" `tup` [Replaceable "Element"]
   , "String" `tup` [func "f" [StmtExp $ Str "x y z", StmtExp $ Str "1 \\\" 2"]]
-  , "Docstring" `tup` [Package Nothing "P" (Just "P doc string") [
+  , "Docstring" `tup` [Package Nothing "P" (Just "P doc string") [] [
                       Function Nothing "f" [] (Just "f doc\n  string") [] [] []
                     , Union "U" (Just "U docstring") []
                     , Union "W" Nothing []
@@ -126,20 +126,23 @@ parserExpected = [
                      ] "c")
                    ]]
   , "Protection" `tup` [
-      Package  Nothing "P" Nothing []
-    , ASTPartFn (PartFn Nothing "F" [] Nothing [])
-    , Function Nothing "f" [] Nothing [] [] []
-    , Import   Nothing "I" Nothing (Left Wild)
+      Package Nothing "X" Nothing [
+        Import   Nothing "I" Nothing (Left Wild)
+      , Import   publ "I" Nothing (Left Wild)
+      , Import   prot "I" Nothing (Left Wild)
+      ] [
+        Package  Nothing "P" Nothing [] []
+      , ASTPartFn (PartFn Nothing "F" [] Nothing [])
+      , Function Nothing "f" [] Nothing [] [] []
 
-    , Package  publ "P" Nothing []
-    , ASTPartFn $ PartFn publ "F" [] Nothing []
-    , Function publ "f" [] Nothing [] [] []
-    , Import   publ "I" Nothing (Left Wild)
+      , Package  publ "P" Nothing [] []
+      , ASTPartFn $ PartFn publ "F" [] Nothing []
+      , Function publ "f" [] Nothing [] [] []
 
-    , Package  prot "P" Nothing []
-    , ASTPartFn $ PartFn prot "F" [] Nothing []
-    , Function prot "f" [] Nothing [] [] []
-    , Import   prot "I" Nothing (Left Wild)
+      , Package  prot "P" Nothing [] []
+      , ASTPartFn $ PartFn prot "F" [] Nothing []
+      , Function prot "f" [] Nothing [] [] []
+      ]
     ]
   , "Constant" `tup` [Constant ("Integer") "i" "3"]
   , "FunProtected" `tup` [
@@ -150,12 +153,8 @@ parserExpected = [
       , FunProtPart $ PartFn Nothing "G" [] Nothing []
       ] []
     ]
-  , "Not" `tup` [
-      func "f" [StmtExp $ UnaryApp "not" "y"]
-    ]
-  , "StrExp" `tup` [
-      func "f" [StmtExp $ Str "str"]
-    ]
+  , "Not" `tup` [func "f" [StmtExp $ UnaryApp "not" "y"]]
+  , "StrExp" `tup` [func "f" [StmtExp $ Str "str"]]
   , "VarDeclMultiple" `tup` [
      Function Nothing "f" [] Nothing [] [FunProtVar ("Integer", "x"),FunProtVar ("Integer", "y")] []
     ]

@@ -9,13 +9,15 @@ import qualified Tokenizer       as T
 data AST = Comment String  -- //
          | Constant Type Var Exp
          | Function (Maybe Protection) Name [Name] (Maybe DocString) [Param] [FunProt] [Stmt]
-         | Import (Maybe Protection) Name (Maybe Name) (Either Wild [Var])
          | MComment String -- /* */
-         | Package (Maybe Protection) Name (Maybe DocString) [AST]
+         | Package (Maybe Protection) Name (Maybe DocString) [Import] [AST]
          | ASTPartFn PartFn
          | Replaceable Name
          | TypeAlias Name Type
          | Union Name (Maybe DocString) [Record]
+  deriving (Eq, Show)
+
+data Import = Import (Maybe Protection) Name (Maybe Name) (Either Wild [Var])
   deriving (Eq, Show)
 
 isAstStart :: T.Token -> Bool
@@ -35,11 +37,14 @@ isAstStart (T.W "replaceable") = True
 isAstStart _ = False
 
 protectAst :: Protection -> AST -> AST
-protectAst p (Import _ a b c) = Import (Just p) a b c
 protectAst p (Function _ a b c d e f) = Function (Just p) a b c d e f
-protectAst p (Package _ a b c) = Package (Just p) a b c
+protectAst p (Package _ a b c d) = Package (Just p) a b c d
 protectAst p (ASTPartFn pf) = ASTPartFn $ protectPartFn p pf
 protectAst _p ast = error $ "protectAst cannot protect " ++ show ast
+
+protectImport :: Protection -> Import -> Import
+protectImport p (Import _ a b c) = Import (Just p) a b c
+
 
 protectPartFn :: Protection -> PartFn -> PartFn
 protectPartFn p (PartFn _ a b c d) = PartFn (Just p) a b c d
