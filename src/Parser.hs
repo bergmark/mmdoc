@@ -143,10 +143,8 @@ p_importVarsList w@(T.W _) =
 p_importVarsList _ = throwErr $ ExpectedTok [T.ListEnd, anyW]
 
 p_polytypes :: TParser [Name]
-p_polytypes (T.S "<") = eat >>= p_polytypes
-p_polytypes (T.S ">") = return []
-p_polytypes w@(T.W _) = (:) <$> p_name w <*> (p_polytypes =<< eat)
-p_polytypes _ = throwErr $ ExpectedTok [T.S "<", T.S ">", anyW]
+p_polytypes (T.S "<") = (commaSep (T.S ">") p_name =<< eat) <* tok' (T.S ">")
+p_polytypes _ = throwErr $ ExpectedTok [T.S "<"]
 
 p_partfn :: TParser PartFn
 p_partfn T.Partial = do

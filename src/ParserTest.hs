@@ -66,6 +66,7 @@ parserExpected = [
   , "PolyType" `tup` [
       Function Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a"), Output (ty "A", "b")] [] []
     , ASTPartFn $ PartFn Nothing "f" ["A"] Nothing [Input (Type "List" ["A"], "a")]
+    , Function Nothing "f" ["A","B"] Nothing [Output (Type "Tuple" ["A","B"], "v")] [] []
     ]
   , "StandAloneStmt" `tup` [func "f" [StmtExp "stmt"]]
   , "Funcall" `tup` [func "f" [
