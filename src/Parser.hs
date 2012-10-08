@@ -178,28 +178,8 @@ p_stmt :: TParser Stmt
 p_stmt (T.S "not") = StmtExp <$> p_exp (T.S "not") <* tok' T.Semi
 p_stmt s@(T.Str _) = StmtExp <$> p_exp s <* tok' T.Semi
 p_stmt T.ListStart = StmtExp <$> p_exp T.ListStart <* tok' T.Semi
-p_stmt l@(T.W _) = do
-  exp1 <- p_exp l
-  look >>= \s -> case s of
-    Just (T.Assign) -> do
-      void $ eat
-      exp2 <- p_exp =<< eat
-      tok' T.Semi
-      return (Assign exp1 exp2)
-    _ -> do
-      tok' T.Semi
-      return (StmtExp exp1)
-p_stmt T.ParenL = do
-  exp1 <- p_exp T.ParenL
-  look >>= \s -> case s of
-    Just T.Assign -> do
-      void $ eat
-      exp2 <- p_exp =<< eat
-      tok' T.Semi
-      return (Assign exp1 exp2)
-    _ -> do
-      tok' T.Semi
-      return (StmtExp exp1)
+p_stmt w@(T.W _) = p_stmtexp' w
+p_stmt T.ParenL = p_stmtexp' T.ParenL
 p_stmt T.If = do
   iff <- p_if' =<< eat
   eifs <- many (== T.Elseif) (const $ eat >>= p_if')
@@ -217,6 +197,19 @@ p_stmt T.For = do
   tok' T.Semi
   return $ For var e stmts
 p_stmt _ = throwErr $ ExpectedTok [anyW, T.ParenL, T.If, anyStr]
+
+p_stmtexp' :: TParser Stmt
+p_stmtexp' t = do
+  exp1 <- p_exp t
+  look >>= \s -> case s of
+    Just (T.Assign) -> do
+      void $ eat
+      exp2 <- p_exp =<< eat
+      tok' T.Semi
+      return (Assign exp1 exp2)
+    _ -> do
+      tok' T.Semi
+      return (StmtExp exp1)
 
 commaSep :: Token -> TParser a -> TParser [a]
 commaSep endt pel  t = do
