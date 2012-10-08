@@ -106,10 +106,10 @@ parserExpected = [
                     , Assign ["y"] (UnaryApp "-" "3")
                     ]]
   , "QualifiedName" `tup` [Function Nothing "f" [] Nothing [
-                            Input (Type "A" [], "b")
-                          , Input (Type "A.B" [], "c")
+                            Input ("A", "b")
+                          , Input ("A.B", "c")
                           , Input (Type "A.B" ["C"] , "d")
-                          , Input (Type "A.B.C" [] , "d")
+                          , Input ("A.B.C" , "d")
                           , Input (Type "A" ["B.C"] , "d")
                           ] [] [
                             StmtExp (Funcall "A.B.c" [])
