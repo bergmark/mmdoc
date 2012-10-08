@@ -337,8 +337,8 @@ p_vardecl _ = throwErr $ ExpectedTok [anyW]
 p_type :: TParser Type
 p_type w@(T.W _) = do
   n <- p_name w
-  qs <- optionWith (return []) (== T.S "<") (eat >>= p_polytypes)
-  return $ Type n qs
+  qts <- optionWith (return []) (== T.S "<") ((tok' (T.S "<") >> eat >>= commaSep (T.S ">") p_type) <* tok' (T.S ">"))
+  return $ Type n qts
 p_type _ = throwErr $ ExpectedTok [anyW]
 
 p_var :: TParser Var

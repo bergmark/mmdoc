@@ -21,7 +21,8 @@ executable main
                      filepath,
                      mtl,
                      groom,
-                     parsec
+                     parsec,
+                     split
 
 executable test
   hs-source-dirs:    src
@@ -35,4 +36,6 @@ executable test
                      groom,
                      test-framework,
                      test-framework-hunit,
-                     parsec
+                     parsec,
+                     split
+

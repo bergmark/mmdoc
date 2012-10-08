@@ -1,9 +1,10 @@
 module Types where
 
+import           Data.List.Split
 import           Data.String
-import           Prelude     hiding (exp)
+import           Prelude         hiding (exp)
 
-import qualified Tokenizer   as T
+import qualified Tokenizer       as T
 
 data AST = Comment String  -- //
          | Constant Type Var Exp
@@ -95,8 +96,11 @@ type VarDecl = (Type, Var)
 
 type DocString = String
 type Var = String
-data Type = Type Name [Name]
+data Type = Type Name [Type]
   deriving (Eq, Ord, Show)
+instance IsString Type where
+  fromString s = Type (fromString s) []
+
 type Op = String
 
 data Name = UnQual String
@@ -104,4 +108,5 @@ data Name = UnQual String
   deriving (Eq, Ord, Show)
 
 instance IsString Name where
-  fromString = UnQual
+  fromString s = foldl Qual (UnQual x) xs
+    where (x:xs) = reverse $ splitOn "." s

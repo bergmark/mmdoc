@@ -114,6 +114,7 @@ p_token =
     <|> S <$> (try (string "and")
             <|> try (string "or")
             <|> try (string "not")
+            <|> try (string ">" <* notFollowedBy (oneOf "+&*+:=/-<"))
             <|> many1 (oneOf "+&*+:=/-<>"))
     <|> W <$> many1 wordChar
   where
