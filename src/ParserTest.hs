@@ -167,4 +167,5 @@ parserExpected = [
     ]]
   , "SkipComment" `tup` [func "f" [StmtExp $ "x"]]
   , "List" `tup` [func "f" [StmtExp $ List [], StmtExp $ List ["1", "2", "3"]]]
+  , "For" `tup` [func "f" [For "i" (InfixApp ":" "1" "n") ["x"]]]
   ] where tup = (,)

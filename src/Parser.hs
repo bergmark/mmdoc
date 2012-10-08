@@ -202,6 +202,16 @@ p_stmt T.If = do
   elsestmt <- option (== T.Else) (tok' T.Else >> many (/= T.End) p_stmt)
   tok' T.End >> tok' T.If >> tok' T.Semi
   return $ If (iff : eifs) elsestmt
+p_stmt T.For = do
+  var <- p_var =<< eat
+  tok' T.In
+  e <- p_exp =<< eat
+  tok' T.Loop
+  stmts <- many (/= T.End) p_stmt
+  tok' T.End
+  tok' T.For
+  tok' T.Semi
+  return $ For var e stmts
 p_stmt _ = throwErr $ ExpectedTok [anyW, T.ParenL, T.If, anyStr]
 
 commaSep :: Token -> TParser a -> TParser [a]

@@ -62,7 +62,11 @@ data Param = Input VarDecl
 data Stmt = Assign [Var] Exp
           | StmtExp Exp
           | If [(Exp,[Stmt])] (Maybe [Stmt])
+          | For Var Exp [Stmt]
   deriving (Eq, Show)
+
+instance IsString Stmt where
+  fromString = StmtExp . fromString
 
 data Case = Case Pat Exp
   deriving (Eq, Ord, Show)

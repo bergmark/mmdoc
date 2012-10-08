@@ -21,13 +21,16 @@ data Token = Algorithm
            | Encapsulated
            | End
            | Equation
+           | For
            | Function
            | If
+           | In
            | Import
            | Input
            | Local
            | ListEnd
            | ListStart
+           | Loop
            | Matchcontinue
            | MComment String
            | Match
@@ -93,11 +96,14 @@ p_token =
     <|> try (strSep "else"         *> return Else)
     <|> try (strSep "end"          *> return End)
     <|> try (strSep "equation"     *> return Equation)
+    <|> try (strSep "for"          *> return For)
     <|> try (strSep "function"     *> return Function)
     <|> try (strSep "if"           *> return If)
+    <|> try (strSep "in"           *> return In)
     <|> try (strSep "import"       *> return Import)
     <|> try (strSep "input"        *> return Input)
     <|> try (strSep "local"        *> return Local)
+    <|> try (strSep "loop"         *> return Loop)
     <|> try (strSep "matchcontinue"*> return Matchcontinue)
     <|> try (strSep "match"        *> return Match)
     <|> try (strSep "output"       *> return Output)
