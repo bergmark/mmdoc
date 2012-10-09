@@ -1,19 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS -fno-warn-unused-do-bind #-}
 
 module Doc where
 
 import           Data.List
 import           Data.Maybe
-import           Data.Monoid
 import           Data.String
 import           Prelude                     hiding (div)
-import           Text.Blaze.Html5            hiding (head, map)
+import           Text.Blaze.Html5            hiding (contents, head, map)
 import qualified Text.Blaze.Html5            as H
 import           Text.Blaze.Html5.Attributes
 import qualified Text.Blaze.Html5.Attributes as A
 
 import           Print
 import           Types
+import           Warnings
 
 generate :: [AST] -> String
 generate = concatMap generate'
@@ -68,3 +69,6 @@ astDoc (Package _prot nam _doc imports contents) = do
 
 astImportDoc :: Import -> Html
 astImportDoc c@(Import _ nam _ _) = div ! class_ "import" $ tos nam
+
+warnings :: [Warning] -> Html
+warnings = ul . mapM_ (li . fromString . show)

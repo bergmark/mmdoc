@@ -119,12 +119,13 @@ p_token =
     <|> try (strSep "uniontype"    *> return Union)
     <|> Str <$> between (char '"') (char '"')
           (concat <$> many (try (string "\\\"") <|> many1 (noneOf "\\\"")))
-    <|> S <$> (try (string "and")
-            <|> try (string "or")
-            <|> try (string "not")
+    <|> S <$> ((try (strSep "and") *> return "and")
+            <|> (try (strSep "or") *> return "or")
+            <|> (try (strSep "not") *> return "not")
             <|> try (string ">" <* notFollowedBy (oneOf "+&*+:=/-<"))
             <|> many1 (oneOf "+&*+:=/-<>"))
     <|> W <$> many1 wordChar
   where
     wordChar = letter <|> digit <|> char '_'
-    strSep s = str s <* notFollowedBy wordChar
+    strSep :: String -> CharParser st ()
+    strSep s = str s >> notFollowedBy wordChar

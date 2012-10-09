@@ -1,31 +1,44 @@
 module Main where
 
 import           Control.Applicative
+import           System.Directory
 import           System.Environment
+import           System.FilePath
 import           Text.Blaze.Html.Renderer.String
 
 import qualified Doc                             as D
+import           Misc
 import qualified Parser                          as P
 import qualified Tokenizer                       as T
 import qualified Warn                            as W
 
 main :: IO ()
 main = do
-  fp   <- (!! 0) <$> getArgs
-  f    <- readFile fp
+  srcdir <- (!! 0) <$> getArgs
+  srcfps <- map (srcdir </>) . filter dotMo <$> getDirectoryContents srcdir
+  destdir <- (!! 1) <$> getArgs
+  mapM_ (\fp -> readFile fp >>= doFile >>= writeF fp destdir) srcfps
+  return ()
+
+doFile :: String -> IO (Either String String)
+doFile f = do
   case T.parseFile f of
-    Left err -> putStrLn "----- tokenize error:" >> print err
+    Left err -> return . Left $ show err
     Right ts -> do
       p <- P.parse ts
       case p of
         Left err -> do
-          putStrLn "---- parse error:"
           case err of
             P.ParseError perr (P.ParseState { P.lastToken = lt, P.parseTokens = ts' }) ->
-              error $ show (perr, lt, take 5 ts')
+              return . Left $ show (perr, lt, take 5 ts')
 
-        Right ast -> do
-          let ws = W.check ast
+        Right ast -> return $
+          let ws = W.check ast in
           if (not . null) ws
-            then putStrLn "---- warnings: " >> print ws
-            else putStrLn . renderHtml $ D.htmlDoc ast
+            then Right . renderHtml $ D.warnings ws
+            else Right . renderHtml $ D.htmlDoc ast
+
+writeF :: FilePath -> FilePath -> Either String String -> IO ()
+writeF srcfp _ (Left err) = error $ "error in " ++ srcfp ++ ": " ++ err
+writeF srcfp destdir (Right html) = print (destdir </> srcfp) -- writeFile (destdir </> srcfp) html
+

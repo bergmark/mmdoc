@@ -172,4 +172,5 @@ parserExpected = [
     , Assign (Tuple ["x", "y"]) (Tuple ["a", "b"])
     , Assign (Tuple [Tuple ["x", "y"], "z"]) (Tuple [Tuple ["a", "b"], "c"])
     ]]
+  , "ReservedPrefix" `tup` [ASTPartFn $ PartFn Nothing "F" [] Nothing [Input ("ordering", "ord")]]
   ] where tup = (,)
