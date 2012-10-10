@@ -39,8 +39,8 @@ instance Print AST where
   pr (Comment s) = "//" ++ s
   pr (Constant ty var _exp) = "constant" <++> pr ty <++> pr var ++ " = <<exp>>";
   pr (MComment s) = "/*" ++ s ++ "*/"
-  pr (Union n d rs) = concat [
-                       "uniontype " ++ pr n ++ "\n"
+  pr (Union p n d rs) = concat [
+                       pr p <++> "uniontype " ++ pr n ++ "\n"
                      ,   pr_docstr d ++ "\n"
                      ,   concatLines (ind . pr) rs
                      , "\nend " ++ pr n ++ ";"]

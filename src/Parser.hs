@@ -95,7 +95,7 @@ p_ast T.Union = do
   tok' T.End
   void $ p_name =<< eat
   tok' T.Semi
-  return $ Union name doc recs
+  return $ Union Nothing name doc recs
 p_ast (T.W "replaceable") =
   Replaceable <$> (tok' T.Type *> (p_name =<< eat) <* t_w "subtypeof" <* t_w "Any" <* tok' T.Semi)
 p_ast T.Type = do

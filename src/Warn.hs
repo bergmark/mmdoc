@@ -13,6 +13,7 @@ checkProtection (Function Nothing n _ _ _ _ _) = return $ W.Unprotected (pr n)
 checkProtection (Package Nothing n _ is cs) = W.Unencapsulated (pr n) : concatMap checkImportProtection is ++ concatMap checkProtection cs
 checkProtection (Package _       _ _ is cs) = concatMap checkImportProtection is ++ concatMap checkProtection cs
 checkProtection (ASTPartFn (PartFn Nothing n _ _ _)) = return $ W.Unprotected (pr n)
+checkProtection (Union Nothing n _ _) = return $ W.Unprotected (pr n)
 checkProtection _ = []
 
 checkImportProtection :: Import -> [Warning]
@@ -24,7 +25,7 @@ checkDocstring (Function _ n  _ Nothing _ _ _) = return $ W.MissingDocstring (pr
 checkDocstring (Package _ n Nothing _ cs) = W.MissingDocstring (pr n) : concatMap checkDocstring cs
 checkDocstring (Package _ _ _ _ cs) = concatMap checkDocstring cs
 checkDocstring (ASTPartFn (PartFn _ n _ Nothing _)) = return $ W.MissingDocstring (pr n)
-checkDocstring (Union n Nothing _) = return $ W.MissingDocstring (pr n)
+checkDocstring (Union _ n Nothing _) = return $ W.MissingDocstring (pr n)
 checkDocstring _ = []
 
 checkStmts :: AST -> [Warning]

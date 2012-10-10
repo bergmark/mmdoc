@@ -14,7 +14,7 @@ data AST = Comment String  -- //
          | ASTPartFn PartFn
          | Replaceable Name
          | TypeAlias Name Type
-         | Union Name (Maybe DocString) [Record]
+         | Union (Maybe Protection) Name (Maybe DocString) [Record]
   deriving (Eq, Show)
 
 data Import = Import (Maybe Protection) Name (Maybe Name) (Either Wild [Var])
@@ -40,6 +40,7 @@ protectAst :: Protection -> AST -> AST
 protectAst p (Function _ a b c d e f) = Function (Just p) a b c d e f
 protectAst p (Package _ a b c d) = Package (Just p) a b c d
 protectAst p (ASTPartFn pf) = ASTPartFn $ protectPartFn p pf
+protectAst p (Union _ a b c) = Union (Just p) a b c
 protectAst _p ast = error $ "protectAst cannot protect " ++ show ast
 
 protectImport :: Protection -> Import -> Import

@@ -47,8 +47,10 @@ parserExpected = [
   , "MatchElseEquation" `tup` [func "f" [
                                 Assign "res" $ Match ["x"] [] [Case "_" [] "x"] (Just $ MatchElse ["y"] "z")
                               ]]
-  , "UnionType" `tup` [pkg "P" [Union "U" Nothing []]]
-  , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [("Integer","a"), ("String","b")]]]
+  , "UnionType" `tup` [pkg "P" [Union Nothing "U" Nothing []]]
+  , "UnionTypeRecord" `tup` [Union Nothing "U" Nothing
+                              [Record "R" [], Record "Tup" [("Integer","a"), ("String","b")]]
+                            ]
   , "Import" `tup` [Package Nothing "I" Nothing [
                        Import Nothing "X"    Nothing       (Left Wild)
                      , Import prot    "Y"    Nothing       (Left Wild)
@@ -68,8 +70,8 @@ parserExpected = [
   , "String" `tup` [func "f" [StmtExp $ Str "x y z", StmtExp $ Str "1 \\\" 2"]]
   , "Docstring" `tup` [Package Nothing "P" (Just "P doc string") [] [
                       Function Nothing "f" [] (Just "f doc\n  string") [] [] []
-                    , Union "U" (Just "U docstring") []
-                    , Union "W" Nothing []
+                    , Union Nothing "U" (Just "U docstring") []
+                    , Union Nothing "W" Nothing []
                     , ASTPartFn $ PartFn Nothing "F" [] (Just "F docstring") [Input ("String", "x")]
                     ]]
   , "PolyType" `tup` [
@@ -151,6 +153,10 @@ parserExpected = [
       , Package  prot "P" Nothing [] []
       , ASTPartFn $ PartFn prot "F" [] Nothing []
       , Function prot "f" [] Nothing [] [] []
+
+      , Union Nothing "U" Nothing []
+      , Union publ "U" Nothing []
+      , Union prot "U" Nothing []
       ]
     ]
   , "Constant" `tup` [Constant ("Integer") "i" "3"]

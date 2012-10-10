@@ -118,7 +118,7 @@ p_token =
     <|> try (strSep "type"         *> return Type)
     <|> try (strSep "uniontype"    *> return Union)
     <|> Str <$> between (char '"') (char '"')
-          (concat <$> many (try (string "\\\"") <|> many1 (noneOf "\\\"")))
+          (concat <$> many (try (list2 <$> char '\\' <*> anyChar) <|> many1 (noneOf "\\\"")))
     <|> S <$> ((try (strSep "and") *> return "and")
             <|> (try (strSep "or") *> return "or")
             <|> (try (strSep "not") *> return "not")
@@ -129,3 +129,4 @@ p_token =
     wordChar = letter <|> digit <|> char '_'
     strSep :: String -> CharParser st ()
     strSep s = str s >> notFollowedBy wordChar
+    list2 x y = x : [y]

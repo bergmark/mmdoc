@@ -16,4 +16,8 @@ protected package P end P;
 protected partial function F end F;
 protected function f algorithm end f;
 
+uniontype U end U;
+public uniontype U end U;
+protected uniontype U end U;
+
 end X;
