@@ -252,7 +252,13 @@ p_exp t = do
       mvars <- p_matchvars =<< eat
       locals <- optionWith (return []) (== T.Local) (tok' T.Local >> p_vardecls)
       cases <- many (== T.Case) p_match_case
-      els <- option (== T.Else) ((tok' T.Else >> eat >>= p_exp) <* tok' T.Semi)
+      els <- option (== T.Else) $ do
+        tok' T.Else
+        eqs <- p_equation
+        tokM' T.Then
+        e <- p_exp =<< eat
+        tok' T.Semi
+        return $ MatchElse eqs e
       tok' T.End
       tok' T.Match
       return $ Match mvars locals cases els
@@ -310,12 +316,15 @@ p_expList t = (:) <$> p_exp t <*> optionWith (return []) (== T.Comma) (eat >> ea
 p_match_case :: TParser Case
 p_match_case T.Case = do
   pat <- eat >>= p_pat
-  eqs <- optionWith (return []) (== T.Equation) (tok' T.Equation >> eat >>= semiEnd T.Then p_exp)
+  eqs <- p_equation
   tok' T.Then
   exp <- eat >>= p_exp
   tok' T.Semi
   return $ Case pat eqs exp
 p_match_case _ = throwErr $ ExpectedTok [T.Case]
+
+p_equation :: Parse [Exp]
+p_equation = optionWith (return []) (== T.Equation) (tok' T.Equation >> eat >>= semiEnd T.Then p_exp)
 
 p_pat :: TParser Pat
 p_pat = p_exp
@@ -457,6 +466,9 @@ tok' = void . tok
 
 tokM :: TParser (Maybe Token)
 tokM t = option (== t) (tok t)
+
+tokM' :: TParser ()
+tokM' = void . tokM
 
 many :: (Token -> Bool) -> (TParser a) -> Parse [a]
 many pred p =

@@ -1,7 +1,6 @@
 module Main where
 
 import           Control.Applicative
-import           System.Directory
 import           System.Environment
 import           System.FilePath
 import           Text.Blaze.Html.Renderer.String
@@ -14,11 +13,13 @@ import qualified Warn                            as W
 
 main :: IO ()
 main = do
-  srcdir <- (!! 0) <$> getArgs
-  srcfps <- map (srcdir </>) . filter dotMo <$> getDirectoryContents srcdir
-  destdir <- (!! 1) <$> getArgs
-  mapM_ (\fp -> readFile fp >>= doFile >>= writeF fp destdir) srcfps
-  return ()
+  src <- (!! 0) <$> getArgs
+  if dotMo src
+    then print =<< doFile =<< readFile src
+    else do
+      srcfps <- filter dotMo <$> getDirectoryContentsFullPath src
+      destdir <- (!! 1) <$> getArgs
+      mapM_ (\fp -> readFile fp >>= doFile >>= writeF fp destdir) srcfps
 
 doFile :: String -> IO (Either String String)
 doFile f = do
@@ -40,5 +41,5 @@ doFile f = do
 
 writeF :: FilePath -> FilePath -> Either String String -> IO ()
 writeF srcfp _ (Left err) = error $ "error in " ++ srcfp ++ ": " ++ err
-writeF srcfp destdir (Right html) = print (destdir </> srcfp) -- writeFile (destdir </> srcfp) html
+writeF srcfp destdir (Right _html) = print (destdir </> srcfp) -- writeFile (destdir </> srcfp) html
 

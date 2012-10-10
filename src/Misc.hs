@@ -1,5 +1,9 @@
 module Misc where
 
+import           Control.Applicative
+import           System.Directory
+import           System.FilePath
+
 import           Data.List
 
 feither :: Either a b -> (a -> c) -> (b -> c) -> c
@@ -10,3 +14,6 @@ fmaybe m f g = maybe f g m
 
 dotMo :: String -> Bool
 dotMo = isSuffixOf ".mo"
+
+getDirectoryContentsFullPath :: FilePath -> IO [FilePath]
+getDirectoryContentsFullPath dir = map (dir </>) <$> getDirectoryContents dir

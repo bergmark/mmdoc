@@ -36,7 +36,7 @@ parserExpected = [
                         Assign "res" $ Match ["a","b","c"] [] [Case "_" [] Unit] Nothing
                       ]]
   , "MatchElse" `tup` [func "f" [
-                        Assign "res" $ Match ["a","b","c"] [] [Case "_" [] Unit] (Just Unit)
+                        Assign "res" $ Match ["a","b","c"] [] [Case "_" [] Unit] (Just $ MatchElse [] Unit)
                       ]]
   , "MatchEquation" `tup` [func "f" [
                             Assign "res" $ Match ["x"] [] [
@@ -44,6 +44,9 @@ parserExpected = [
                             , Case "_" ["b", Funcall "f" []] Unit
                             ] Nothing
                           ]]
+  , "MatchElseEquation" `tup` [func "f" [
+                                Assign "res" $ Match ["x"] [] [Case "_" [] "x"] (Just $ MatchElse ["y"] "z")
+                              ]]
   , "UnionType" `tup` [pkg "P" [Union "U" Nothing []]]
   , "UnionTypeRecord" `tup` [Union "U" Nothing [Record "R" [], Record "Tup" [("Integer","a"), ("String","b")]]]
   , "Import" `tup` [Package Nothing "I" Nothing [

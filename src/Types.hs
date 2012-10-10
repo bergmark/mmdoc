@@ -89,7 +89,7 @@ data FunProt = FunProtVar VarDecl
 
 data Exp = EIf [(Exp,Exp)] Exp
          | EVar Name
-         | Match [Var] [VarDecl] [Case] (Maybe Exp)
+         | Match [Var] [VarDecl] [Case] (Maybe MatchElse)
          | Funcall Name [Exp]
          | InfixApp Op Exp Exp
          | UnaryApp Op Exp
@@ -102,6 +102,9 @@ data Exp = EIf [(Exp,Exp)] Exp
 
 instance IsString Exp where
   fromString = EVar . fromString
+
+data MatchElse = MatchElse [Exp] Exp
+  deriving (Eq, Ord, Show)
 
 type Pat = Exp
 
