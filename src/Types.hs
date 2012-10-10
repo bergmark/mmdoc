@@ -75,12 +75,12 @@ data Stmt = Assign Exp Exp
           | StmtExp Exp
           | If [(Exp,[Stmt])] (Maybe [Stmt])
           | For Var Exp [Stmt]
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 instance IsString Stmt where
   fromString = StmtExp . fromString
 
-data Case = Case Pat Exp
+data Case = Case Pat [Exp] Exp
   deriving (Eq, Ord, Show)
 
 data FunProt = FunProtVar VarDecl

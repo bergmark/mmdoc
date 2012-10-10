@@ -10,6 +10,7 @@ import           Control.Monad
 import           Control.Monad.Error
 import           Control.Monad.State
 import           Data.Maybe
+import           Debug.Trace
 import           Prelude             hiding (exp, pred)
 
 import           Tokenizer           (Token)
@@ -223,7 +224,7 @@ p_stmtexp' t = do
       return (StmtExp exp1)
 
 commaSep :: Token -> TParser a -> TParser [a]
-commaSep endt pel  t = do
+commaSep endt pel t = do
   el <- pel t
   hi <- lookIs endt
   if hi
@@ -231,6 +232,17 @@ commaSep endt pel  t = do
     else do
       tok' T.Comma
       els <- commaSep endt pel =<< eat
+      return $ el : els
+
+semiSep :: Token -> TParser a -> TParser [a]
+semiSep endt pel t = trace (show ("semiSep", endt, t)) $ do
+  el <- pel t
+  tok' T.Semi
+  hi <- lookIs endt
+  if hi
+    then return [el]
+    else do
+      els <- semiSep endt pel =<< eat
       return $ el : els
 
 p_if' :: TParser (Exp, [Stmt])
@@ -318,10 +330,11 @@ p_expList t = (:) <$> p_exp t <*> optionWith (return []) (== T.Comma) (eat >> ea
 p_match_case :: TParser Case
 p_match_case T.Case = do
   pat <- eat >>= p_pat
+  eqs <- optionWith (return []) (== T.Equation) (tok' T.Equation >> eat >>= semiSep T.Then p_exp)
   tok' T.Then
   exp <- eat >>= p_exp
   tok' T.Semi
-  return $ Case pat exp
+  return $ Case pat eqs exp
 p_match_case _ = throwErr $ ExpectedTok [T.Case]
 
 p_pat :: TParser Pat
