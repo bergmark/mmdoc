@@ -10,7 +10,6 @@ import           Control.Monad
 import           Control.Monad.Error
 import           Control.Monad.State
 import           Data.Maybe
-import           Debug.Trace
 import           Prelude             hiding (exp, pred)
 
 import           Tokenizer           (Token)
@@ -224,26 +223,10 @@ p_stmtexp' t = do
       return (StmtExp exp1)
 
 commaSep :: Token -> TParser a -> TParser [a]
-commaSep endt pel t = do
-  el <- pel t
-  hi <- lookIs endt
-  if hi
-    then return [el]
-    else do
-      tok' T.Comma
-      els <- commaSep endt pel =<< eat
-      return $ el : els
+commaSep = sepBy T.Comma
 
-semiSep :: Token -> TParser a -> TParser [a]
-semiSep endt pel t = trace (show ("semiSep", endt, t)) $ do
-  el <- pel t
-  tok' T.Semi
-  hi <- lookIs endt
-  if hi
-    then return [el]
-    else do
-      els <- semiSep endt pel =<< eat
-      return $ el : els
+semiEnd :: Token -> TParser a -> TParser [a]
+semiEnd = endBy T.Semi
 
 p_if' :: TParser (Exp, [Stmt])
 p_if' t = do
@@ -330,7 +313,7 @@ p_expList t = (:) <$> p_exp t <*> optionWith (return []) (== T.Comma) (eat >> ea
 p_match_case :: TParser Case
 p_match_case T.Case = do
   pat <- eat >>= p_pat
-  eqs <- optionWith (return []) (== T.Equation) (tok' T.Equation >> eat >>= semiSep T.Then p_exp)
+  eqs <- optionWith (return []) (== T.Equation) (tok' T.Equation >> eat >>= semiEnd T.Then p_exp)
   tok' T.Then
   exp <- eat >>= p_exp
   tok' T.Semi
@@ -492,6 +475,28 @@ option pred p =
 
 optionWith :: Parse a -> (Token -> Bool) -> Parse a -> Parse a
 optionWith def pred p = fromMaybe <$> def <*> option pred p
+
+sepBy :: Token -> Token -> TParser a -> TParser [a]
+sepBy sept endt pel t = do
+  el <- pel t
+  hi <- lookIs endt
+  if hi
+    then return [el]
+    else do
+      tok' sept
+      els <- sepBy sept endt pel =<< eat
+      return $ el : els
+
+endBy :: Token -> Token -> TParser a -> TParser [a]
+endBy sept endt pel t = do
+  el <- pel t
+  tok' sept
+  hi <- lookIs endt
+  if hi
+    then return [el]
+    else do
+      els <- endBy sept endt pel =<< eat
+      return $ el : els
 
 -- Misc
 
