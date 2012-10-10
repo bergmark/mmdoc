@@ -283,10 +283,7 @@ p_exp t = do
     p_exp' T.ParenL = do
       ifM (lookIs T.ParenR)
         (eat >> return Unit)
-        (do -- TODO refac
-          ts <- commaSep T.ParenR p_exp =<< eat
-          tok' T.ParenR
-          return $ Tuple ts)
+        (Tuple <$> ((eat >>= commaSep T.ParenR p_exp) <* tok' T.ParenR))
     p_exp' T.If = do
       iff <- p_expif' =<< eat
       eifs <- many (== T.Elseif) (const $ eat >>= p_expif')
