@@ -259,12 +259,12 @@ p_exp t = do
         where
           p_matchvars :: TParser [Var]
           p_matchvars T.ParenL = -- commaSep T.ParenR p_var =<< eat
-            lookIs T.ParenR >>= \b -> if b
-              then eat >> return []
-              else do
+            ifM (lookIs T.ParenR)
+              (eat >> return [])
+              (do
                 ts <- commaSep T.ParenR p_var =<< eat
                 tok' T.ParenR
-                return ts
+                return ts)
           p_matchvars t' = (:[]) <$> p_var t'
     p_exp' w@(T.W _) = do
       n <- p_name w
@@ -281,12 +281,12 @@ p_exp t = do
           return $ InfixApp op (EVar n) e
         _ -> return $ EVar n
     p_exp' T.ParenL = do
-      lookIs T.ParenR >>= \b -> if b
-        then eat >> return Unit
-        else do
+      ifM (lookIs T.ParenR)
+        (eat >> return Unit)
+        (do -- TODO refac
           ts <- commaSep T.ParenR p_exp =<< eat
           tok' T.ParenR
-          return (Tuple ts)
+          return $ Tuple ts)
     p_exp' T.If = do
       iff <- p_expif' =<< eat
       eifs <- many (== T.Elseif) (const $ eat >>= p_expif')
@@ -479,24 +479,27 @@ optionWith def pred p = fromMaybe <$> def <*> option pred p
 sepBy :: Token -> Token -> TParser a -> TParser [a]
 sepBy sept endt pel t = do
   el <- pel t
-  hi <- lookIs endt
-  if hi
-    then return [el]
-    else do
+  ifM (lookIs endt)
+    (return [el])
+    (do
       tok' sept
       els <- sepBy sept endt pel =<< eat
-      return $ el : els
+      return $ el : els)
 
 endBy :: Token -> Token -> TParser a -> TParser [a]
 endBy sept endt pel t = do
   el <- pel t
   tok' sept
-  hi <- lookIs endt
-  if hi
-    then return [el]
-    else do
+  ifM (lookIs endt)
+    (return [el])
+    (do
       els <- endBy sept endt pel =<< eat
-      return $ el : els
+      return $ el : els)
+
+ifM :: Monad m => m Bool -> m a -> m a -> m a
+ifM pred exp alt = do
+  p <- pred
+  if p then exp else alt
 
 -- Misc
 
