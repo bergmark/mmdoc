@@ -2,6 +2,7 @@ module Main where
 
 import           Control.Applicative
 import           Control.Monad
+import           System.Directory
 import           System.Environment
 import           System.FilePath
 import           System.IO
@@ -22,7 +23,9 @@ main = do
     else do
       srcfps <- filter dotMo <$> getDirectoryContentsFullPath src
       destdir <- (!! 1) <$> getArgs
+      let destfps = flip map srcfps $ (`addExtension` ".html") . dropExtension . (destdir </>) . takeFileName
       mapM_ (\fp -> readFile fp >>= doFile >>= writeF fp destdir) srcfps
+      writeIndex (destdir </> "index.html") destfps
 
 doFile :: String -> IO (Either String String)
 doFile f = do
@@ -50,5 +53,8 @@ writeF srcfp destdir (Right html) = do
   putStrLn $ "writing " ++ fp
   writeFile fp html
 
-renderHtml' :: a -> String
-renderHtml' = const ""
+writeIndex :: FilePath -> [String] -> IO ()
+writeIndex fp documents = do
+  exs <- mapM doesFileExist documents
+  let fns = flip map documents $ takeFileName . dropExtension
+  writeFile fp . renderHtml . D.index $ zip fns exs

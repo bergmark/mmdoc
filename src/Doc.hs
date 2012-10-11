@@ -28,13 +28,15 @@ generate' :: AST -> String
 generate' pkg@(Package {}) = pr pkg
 generate' _ = error "generate' called with non-package"
 
-htmlDoc :: [AST] -> Html
-htmlDoc asts = docTypeHtml $ do
+htmlWrapper :: Html -> Html
+htmlWrapper bod = docTypeHtml $ do
   H.head $ do
     H.title "MetaModelica Functional Generic Library API Documentation"
     link ! rel "stylesheet" ! type_ "text/css" ! href "test.css"
-  body $ do
-    astDoc (head asts)
+  body bod
+
+htmlDoc :: [AST] -> Html
+htmlDoc = htmlWrapper . astDoc . head
 
 tos :: Print p => p -> Html
 tos = fromString . pr
@@ -95,8 +97,6 @@ docDoc (Just doc) =
 warnings :: [Warning] -> Html
 warnings = ul . mapM_ (li . fromString . show)
 
--- Docstring parsing
-
 mdParse :: String -> Html
 mdParse = markdown def . TL.pack
 
@@ -118,3 +118,12 @@ makeSeeMDLink path = "See [" ++ path ++ "](" ++ url ++ ")"
 
 mdCodeIndent :: String -> String
 mdCodeIndent = unlines . map ("    " ++) . lines
+
+-- The index page
+
+index :: [(String, Bool)] -> Html
+index packages = htmlWrapper $ ul $ forM_ packages $
+  \(pkg,exists) -> li $
+     if exists
+       then a ! href (fromString $ pkg ++ ".html") $ fromString pkg
+        else fromString pkg
