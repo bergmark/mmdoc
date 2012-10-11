@@ -20,10 +20,12 @@ executable main
                      blaze-html,
                      directory,
                      filepath,
+                     markdown,
                      mtl,
                      groom,
                      parsec,
-                     split
+                     split,
+                     text
 
 executable test
   hs-source-dirs:    src

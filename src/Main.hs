@@ -1,9 +1,11 @@
 module Main where
 
 import           Control.Applicative
+import           Control.Monad
 import           System.Environment
 import           System.FilePath
 import           Text.Blaze.Html.Renderer.String
+import           Text.Groom
 
 import qualified Doc                             as D
 import           Misc
@@ -33,13 +35,20 @@ doFile f = do
             P.ParseError perr (P.ParseState { P.lastToken = lt, P.parseTokens = ts' }) ->
               return . Left $ show (perr, lt, take 5 ts')
 
-        Right ast -> return $
-          let ws = W.check ast in
-          if (not . null) ws
-            then Right . renderHtml $ D.warnings ws
-            else Right . renderHtml $ D.htmlDoc ast
+        Right ast -> do
+          let ws = W.check ast
+          when (not . null $ ws) $
+            putStrLn . groom $ ws
+          return . Right . renderHtml . D.htmlDoc $ ast
 
 writeF :: FilePath -> FilePath -> Either String String -> IO ()
 writeF srcfp _ (Left err) = error $ "error in " ++ srcfp ++ ": " ++ err
-writeF srcfp destdir (Right _html) = print (destdir </> srcfp) -- writeFile (destdir </> srcfp) html
+--writeF srcfp destdir (Right _html) = print (destdir </> srcfp)
+writeF srcfp destdir (Right html) = do
+  let fp = (`addExtension` ".html") . dropExtension $ destdir </> takeFileName srcfp
+  putStrLn $ "writeFile " ++ fp
+  writeFile fp html
+  putStrLn "wrote"
 
+renderHtml' :: a -> String
+renderHtml' = const ""

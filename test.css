@@ -2,3 +2,5 @@
 code { font-family: monaco, sans-serif; }
 dl,dt,dd { display:block; border: 1px solid black; padding:3px; }
 .protected { color: gray; }
+.documentation { font-style: italic; }
+.error { color: red; }
