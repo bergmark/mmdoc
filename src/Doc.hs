@@ -75,9 +75,12 @@ docFunc isPartial prot nam qs doc ps = do
       "("
       fromString . intercalate ", " . map (\(Input vd) -> pr vd) . filter isInput $ ps
       ") => "
-      "("
-      fromString . intercalate ", " . map (\(Output vd) -> pr vd) . filter isOutput $ ps
-      ")"
+      case filter isOutput $ ps of
+        [Output vd] -> tos vd
+        outputs -> do
+          "("
+          fromString . intercalate ", " . map (\(Output vd) -> pr vd) $ outputs
+          ")"
     docDoc doc
 
 astImportDoc :: Import -> Html
