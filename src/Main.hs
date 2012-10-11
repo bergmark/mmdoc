@@ -23,7 +23,7 @@ main = do
     else do
       srcfps <- filter dotMo <$> getDirectoryContentsFullPath src
       destdir <- (!! 1) <$> getArgs
-      let destfps = flip map srcfps $ (`addExtension` ".html") . dropExtension . (destdir </>) . takeFileName
+      let destfps = flip map srcfps $ (`addExtension` ".html") . (destdir </>) . fileName
       mapM_ (\fp -> readFile fp >>= doFile >>= writeF fp destdir) srcfps
       writeIndex (destdir </> "index.html") destfps
 
@@ -47,14 +47,13 @@ doFile f = do
 
 writeF :: FilePath -> FilePath -> Either String String -> IO ()
 writeF srcfp _ (Left err) = hPutStrLn stderr $ "error in " ++ srcfp ++ ": " ++ err
---writeF srcfp destdir (Right _html) = print (destdir </> srcfp)
 writeF srcfp destdir (Right html) = do
-  let fp = (`addExtension` ".html") . dropExtension $ destdir </> takeFileName srcfp
+  let fp = (`addExtension` ".html") . (destdir </>) . fileName $ srcfp
   putStrLn $ "writing " ++ fp
   writeFile fp html
 
 writeIndex :: FilePath -> [String] -> IO ()
 writeIndex fp documents = do
   exs <- mapM doesFileExist documents
-  let fns = flip map documents $ takeFileName . dropExtension
+  let fns = map fileName documents
   writeFile fp . renderHtml . D.index $ zip fns exs
