@@ -51,11 +51,10 @@ astDoc c@(MComment     {}) = div ! class_ "mcomment" $ tos c
 astDoc c@(Replaceable  {}) = div ! class_ "replaceable" $ tos c
 astDoc c@(TypeAlias    {}) = div ! class_ "typealias" $ tos c
 astDoc c@(Union        {}) = div ! class_ "union" $ mdParse . mdCodeIndent . pr $ c
-astDoc (Package _prot nam doc imports contents) = do
+astDoc (Package prot nam doc imports contents) = do
   iddl nam $ do
     dt ! class_ "package" $ do
-      code "package"
-      code ! class_ "name" $ tos nam
+      code . fromString $ prProt prot <++> "package" <++> pr nam
     docDoc doc
     dd ! class_ "dependencies" $
       dl $ do
@@ -68,8 +67,7 @@ docFunc isPartial prot nam qs doc ps = do
   let partialS = (if isPartial then "partial" else "")
   iddl nam ! class_ (fromString $ partialS <++> "function" <++> pr prot) $ do
     dt $ do
-      fromString $ if prot == Just Protected then "protected " else ""
-      fromString $ partialS <++> "function "
+      fromString $ prProt prot <++> partialS <++> "function "
       tos nam
       fromString . pr_polyList $ qs
       "("
@@ -82,6 +80,9 @@ docFunc isPartial prot nam qs doc ps = do
           fromString . intercalate ", " . map (\(Output vd) -> pr vd) $ outputs
           ")"
     docDoc doc
+
+prProt :: Maybe Protection -> String
+prProt = maybe "UNPROTECTED" pr
 
 astImportDoc :: Import -> Html
 astImportDoc (Import _ nam _ _) = div ! class_ "import" $ tos nam

@@ -47,9 +47,8 @@ writeF srcfp _ (Left err) = hPutStrLn stderr $ "error in " ++ srcfp ++ ": " ++ e
 --writeF srcfp destdir (Right _html) = print (destdir </> srcfp)
 writeF srcfp destdir (Right html) = do
   let fp = (`addExtension` ".html") . dropExtension $ destdir </> takeFileName srcfp
-  putStrLn $ "writeFile " ++ fp
+  putStrLn $ "writing " ++ fp
   writeFile fp html
-  putStrLn "wrote"
 
 renderHtml' :: a -> String
 renderHtml' = const ""
