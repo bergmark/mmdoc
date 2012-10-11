@@ -5,10 +5,11 @@ module Doc where
 
 import           Control.Monad
 import           Data.List
+import           Data.List.Split
 import           Data.Maybe
 import           Data.String
 import qualified Data.Text.Lazy              as TL
-import           Prelude                     hiding (div)
+import           Prelude                     hiding (div, id)
 import qualified Prelude                     (id)
 import           Text.Blaze.Html5            hiding (contents, head, map)
 import qualified Text.Blaze.Html5            as H
@@ -38,6 +39,9 @@ htmlDoc asts = docTypeHtml $ do
 tos :: Print p => p -> Html
 tos = fromString . pr
 
+iddl :: Name -> Html -> Html
+iddl nam = dl ! id (fromString . pr $ nam)
+
 astDoc :: AST -> Html
 astDoc c@(Comment      {}) = div ! class_ "comment" $ tos c
 astDoc c@(Constant     {}) = div ! class_ "constant" $ tos c
@@ -48,7 +52,7 @@ astDoc c@(Replaceable  {}) = div ! class_ "replaceable" $ tos c
 astDoc c@(TypeAlias    {}) = div ! class_ "typealias" $ tos c
 astDoc c@(Union        {}) = div ! class_ "union" $ tos c
 astDoc (Package _prot nam doc imports contents) = do
-  dl $ do
+  iddl nam $ do
     dt ! class_ "package" $ do
       code "package"
       code ! class_ "name" $ tos nam
@@ -62,7 +66,7 @@ astDoc (Package _prot nam doc imports contents) = do
 docFunc :: Bool -> Maybe Protection -> Name -> [Name] -> Maybe DocString -> [Param] -> Html
 docFunc isPartial prot nam qs doc ps = do
   let partialS = (if isPartial then "partial" else "")
-  dl ! class_ (fromString $ partialS <++> "function" <++> pr prot) $ do
+  iddl nam ! class_ (fromString $ partialS <++> "function" <++> pr prot) $ do
     dt $ do
       fromString $ if prot == Just Protected then "protected " else ""
       fromString $ partialS <++> "function "
@@ -90,5 +94,17 @@ warnings = ul . mapM_ (li . fromString . show)
 -- Docstring parsing
 
 parseDocString :: String -> Html
-parseDocString s =
-    markdown def . TL.pack
+parseDocString = markdown def . TL.pack . unsee
+  where
+    unsee :: String -> String
+    unsee s = unlines $
+      flip map (lines s) (\l -> if ((isPrefixOf "@see " . dropWhile (== ' ')) l)
+        then (makeSeeMDLink . drop 5 . dropWhile (== ' ')) l
+        else l)
+
+makeSeeMDLink :: String -> String
+makeSeeMDLink path = "See [" ++ path ++ "](" ++ url ++ ")"
+  where
+    url = case splitOn "." path of
+      [_] -> "#local"
+      quali -> (concat $ intersperse "." $ init quali) ++ ".html#" ++ last quali

@@ -4,6 +4,7 @@ import           Control.Applicative
 import           Control.Monad
 import           System.Environment
 import           System.FilePath
+import           System.IO
 import           Text.Blaze.Html.Renderer.String
 import           Text.Groom
 
@@ -42,7 +43,7 @@ doFile f = do
           return . Right . renderHtml . D.htmlDoc $ ast
 
 writeF :: FilePath -> FilePath -> Either String String -> IO ()
-writeF srcfp _ (Left err) = error $ "error in " ++ srcfp ++ ": " ++ err
+writeF srcfp _ (Left err) = hPutStrLn stderr $ "error in " ++ srcfp ++ ": " ++ err
 --writeF srcfp destdir (Right _html) = print (destdir </> srcfp)
 writeF srcfp destdir (Right html) = do
   let fp = (`addExtension` ".html") . dropExtension $ destdir </> takeFileName srcfp
