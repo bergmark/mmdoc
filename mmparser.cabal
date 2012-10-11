@@ -1,4 +1,4 @@
-name:                mmparser
+name:                mmdoc
 version:             0.1.0.0
 synopsis:            A parser for a subset of MetaModelica
 -- description:

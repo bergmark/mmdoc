@@ -14,7 +14,6 @@ import qualified Prelude                     (id)
 import           Text.Blaze.Html5            hiding (contents, head, map)
 import qualified Text.Blaze.Html5            as H
 import           Text.Blaze.Html5.Attributes
-import qualified Text.Blaze.Html5.Attributes as A
 import           Text.Markdown
 
 import           Print
@@ -28,15 +27,16 @@ generate' :: AST -> String
 generate' pkg@(Package {}) = pr pkg
 generate' _ = error "generate' called with non-package"
 
-htmlWrapper :: Html -> Html
-htmlWrapper bod = docTypeHtml $ do
+htmlWrapper :: Maybe FilePath -> Maybe FilePath -> Html -> Html
+htmlWrapper js css bod = docTypeHtml $ do
   H.head $ do
     H.title "MetaModelica Functional Generic Library API Documentation"
-    link ! rel "stylesheet" ! type_ "text/css" ! href "test.css"
+    when (isJust js) (script ! type_ "text/javascript" ! src (fromString $ fromJust js) $ return ())
+    when (isJust css) link ! rel "stylesheet" ! type_ "text/css" ! href (fromString $ fromJust css)
   body bod
 
-htmlDoc :: [AST] -> Html
-htmlDoc = htmlWrapper . astDoc . head
+htmlDoc :: FilePath -> FilePath -> [AST] -> Html
+htmlDoc js css = htmlWrapper (Just js) (Just css). astDoc . head
 
 tos :: Print p => p -> Html
 tos = fromString . pr
@@ -121,8 +121,8 @@ mdCodeIndent = unlines . map ("    " ++) . lines
 
 -- The index page
 
-index :: [(String, Bool)] -> Html
-index packages = htmlWrapper $ ul $ forM_ packages $
+index :: FilePath -> [(String, Bool)] -> Html
+index css packages = htmlWrapper Nothing (Just css) $ ul $ forM_ packages $
   \(pkg,exists) -> li $
      if exists
        then a ! href (fromString $ pkg ++ ".html") $ fromString pkg

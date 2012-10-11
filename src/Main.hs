@@ -12,6 +12,7 @@ import           Text.Groom
 import qualified Doc                             as D
 import           Misc
 import qualified Parser                          as P
+import qualified Resources
 import qualified Tokenizer                       as T
 import qualified Warn                            as W
 
@@ -24,6 +25,9 @@ main = do
       srcfps <- filter dotMo <$> getDirectoryContentsFullPath src
       destdir <- (!! 1) <$> getArgs
       let destfps = flip map srcfps $ (`addExtension` ".html") . (destdir </>) . fileName
+      (jsSrc, cssSrc) <- (,) <$> Resources.jsShare <*> Resources.cssShare
+      let (jsDest, cssDest) = (Resources.jsDest destdir, Resources.cssDest destdir)
+      copyFile jsSrc jsDest >> copyFile cssSrc cssDest
       mapM_ (\fp -> readFile fp >>= doFile >>= writeF fp destdir) srcfps
       writeIndex (destdir </> "index.html") destfps
 
@@ -43,7 +47,7 @@ doFile f = do
           let ws = W.check ast
           when (not . null $ ws) $
             putStrLn . groom $ ws
-          return . Right . renderHtml . D.htmlDoc $ ast
+          return . Right . renderHtml . D.htmlDoc Resources.js Resources.css $ ast
 
 writeF :: FilePath -> FilePath -> Either String String -> IO ()
 writeF srcfp _ (Left err) = hPutStrLn stderr $ "error in " ++ srcfp ++ ": " ++ err
@@ -56,4 +60,4 @@ writeIndex :: FilePath -> [String] -> IO ()
 writeIndex fp documents = do
   exs <- mapM doesFileExist documents
   let fns = map fileName documents
-  writeFile fp . renderHtml . D.index $ zip fns exs
+  writeFile fp . renderHtml . D.index Resources.css $ zip fns exs
