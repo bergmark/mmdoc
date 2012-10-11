@@ -17,3 +17,6 @@ dotMo = isSuffixOf ".mo"
 
 getDirectoryContentsFullPath :: FilePath -> IO [FilePath]
 getDirectoryContentsFullPath dir = map (dir </>) <$> getDirectoryContents dir
+
+fileName :: FilePath -> String
+fileName = takeFileName . dropExtension

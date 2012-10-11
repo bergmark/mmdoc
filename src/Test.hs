@@ -9,7 +9,7 @@ import           System.Directory
 import           System.Environment
 import           System.FilePath
 import           Test.Framework
-import           Test.Framework.Providers.HUnit
+import qualified Test.Framework.Providers.HUnit as HUnit
 import           Test.HUnit                     (assertBool, assertEqual)
 import           Test.HUnit.Lang
 import           Text.Groom
@@ -31,7 +31,7 @@ main = do
   parser     <- mkTest testfiles parserTests    "Parser"    "tests"
   p          <- mkTest testfiles printTests     "Print"     "tests/print"
   w          <- mkTest testfiles warnTests      "Warn"      "tests/warn"
-  defaultMainWithArgs [tokenizer, parser, p, w] runnerArgs
+  defaultMainWithArgs [tokenizer, parser, p, w] ("--plain" : runnerArgs)
 
 parserTests :: FilePath -> String -> Test
 parserTests file name =
@@ -99,3 +99,6 @@ eq preface expected actual =
 
 fail :: String -> IO ()
 fail s = assertBool s False
+
+testCase :: FilePath -> Assertion -> Test
+testCase = HUnit.testCase . fileName
