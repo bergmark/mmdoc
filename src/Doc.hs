@@ -50,7 +50,7 @@ astDoc (Function prot nam qs doc ps _ _) = docFunc False prot nam qs doc ps
 astDoc c@(MComment     {}) = div ! class_ "mcomment" $ tos c
 astDoc c@(Replaceable  {}) = div ! class_ "replaceable" $ tos c
 astDoc c@(TypeAlias    {}) = div ! class_ "typealias" $ tos c
-astDoc c@(Union        {}) = div ! class_ "union" $ tos c
+astDoc c@(Union        {}) = div ! class_ "union" $ mdParse . mdCodeIndent . pr $ c
 astDoc (Package _prot nam doc imports contents) = do
   iddl nam $ do
     dt ! class_ "package" $ do
@@ -93,8 +93,11 @@ warnings = ul . mapM_ (li . fromString . show)
 
 -- Docstring parsing
 
+mdParse :: String -> Html
+mdParse = markdown def . TL.pack
+
 parseDocString :: String -> Html
-parseDocString = markdown def . TL.pack . unsee
+parseDocString = mdParse . unsee
   where
     unsee :: String -> String
     unsee s = unlines $
@@ -108,3 +111,6 @@ makeSeeMDLink path = "See [" ++ path ++ "](" ++ url ++ ")"
     url = case splitOn "." path of
       [_] -> "#local"
       quali -> (concat $ intersperse "." $ init quali) ++ ".html#" ++ last quali
+
+mdCodeIndent :: String -> String
+mdCodeIndent = unlines . map ("    " ++) . lines

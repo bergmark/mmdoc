@@ -39,10 +39,10 @@ instance Print AST where
   pr (Comment s) = "//" ++ s
   pr (Constant ty var _exp) = "constant" <++> pr ty <++> pr var ++ " = <<exp>>";
   pr (MComment s) = "/*" ++ s ++ "*/"
-  pr (Union p n d rs) = concat [
+  pr (Union p n d records) = concat [
                        pr p <++> "uniontype " ++ pr n ++ "\n"
                      ,   pr_docstr d ++ "\n"
-                     ,   concatLines (ind . pr) rs
+                     ,   concatLines (ind . pr) records
                      , "\nend " ++ pr n ++ ";"]
   pr (Replaceable n) = "replaceable type " ++ pr n ++ ";"
   pr (TypeAlias a b) = "type " ++ pr a ++ " = " ++ pr b ++ ";"
@@ -76,7 +76,7 @@ instance Print Name where
   pr (Qual n s) = pr n ++ "." ++ s
 
 instance Print Record where
-  pr (Record n vds) = "record" ++ pr n ++ concatMap pr vds ++ "end" ++ pr n ++ ";"
+  pr (Record n vds) = "record" <++> pr n <++> concatMap pr vds <++> "end" <++> pr n ++ ";"
 
 instance Print VarDecl where
   pr (t, v) = pr t ++ " " ++ v
