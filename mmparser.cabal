@@ -9,8 +9,12 @@ author:              Adam Bergmark
 maintainer:          adam@edea.se
 -- copyright:
 category:            Language
-build-type:          Simple
+build-type:          Custom
 cabal-version:       >=1.8
+
+data-files:
+  static/Index.js
+  static/index.css
 
 executable main
   hs-source-dirs:    src
