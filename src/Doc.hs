@@ -31,6 +31,7 @@ htmlWrapper :: Maybe FilePath -> Maybe FilePath -> Html -> Html
 htmlWrapper js css bod = docTypeHtml $ do
   H.head $ do
     H.title "MetaModelica Functional Generic Library API Documentation"
+    script ! type_ "text/javascript" ! src "jquery.js" $ return ()
     when (isJust js) (script ! type_ "text/javascript" ! src (fromString $ fromJust js) $ return ())
     when (isJust css) link ! rel "stylesheet" ! type_ "text/css" ! href (fromString $ fromJust css)
   body bod

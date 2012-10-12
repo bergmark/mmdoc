@@ -24,9 +24,12 @@ main = do
     else do
       srcfps <- filter dotMo <$> getDirectoryContentsFullPath src
       destdir <- (!! 1) <$> getArgs
+      createDirectoryIfMissing True destdir
       let destfps = flip map srcfps $ (`addExtension` ".html") . (destdir </>) . fileName
-      (jsSrc, cssSrc) <- (,) <$> Resources.jsShare <*> Resources.cssShare
-      let (jsDest, cssDest) = (Resources.jsDest destdir, Resources.cssDest destdir)
+      (jsSrc, cssSrc, jquerySrc) <- (,,) <$>
+        Resources.jsShare <*> Resources.cssShare <*> Resources.jqueryShare
+      let (jsDest, cssDest, jqueryDest) = (Resources.jsDest destdir, Resources.cssDest destdir, Resources.jqueryDest destdir)
+      copyFile jquerySrc jqueryDest
       copyFile jsSrc jsDest >> copyFile cssSrc cssDest
       mapM_ (\fp -> readFile fp >>= doFile >>= writeF fp destdir) srcfps
       writeIndex (destdir </> "index.html") destfps

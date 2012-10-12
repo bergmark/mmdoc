@@ -15,6 +15,7 @@ cabal-version:       >=1.8
 data-files:
   static/Index.js
   static/index.css
+  static/jquery.js
 
 executable main
   hs-source-dirs:    src
