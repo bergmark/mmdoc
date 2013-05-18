@@ -18,12 +18,13 @@ import qualified Warn                            as W
 
 main :: IO ()
 main = do
-  src <- (!! 0) <$> getArgs
+  (shouldWarn,args) <- getShouldWarn <$> getArgs
+  let src =  args !! 0
   if dotMo src
-    then print =<< doFile =<< readFile src
+    then print =<< doFile shouldWarn =<< readFile src
     else do
       srcfps <- filter dotMo <$> getDirectoryContentsFullPath src
-      destdir <- (!! 1) <$> getArgs
+      let destdir = args !! 1
       createDirectoryIfMissing True destdir
       let destfps = flip map srcfps $ (`addExtension` ".html") . (destdir </>) . fileName
       (jsSrc, cssSrc, jquerySrc) <- (,,) <$>
@@ -31,11 +32,15 @@ main = do
       let (jsDest, cssDest, jqueryDest) = (Resources.jsDest destdir, Resources.cssDest destdir, Resources.jqueryDest destdir)
       copyFile jquerySrc jqueryDest
       copyFile jsSrc jsDest >> copyFile cssSrc cssDest
-      mapM_ (\fp -> readFile fp >>= doFile >>= writeF fp destdir) srcfps
+      mapM_ (\fp -> readFile fp >>= doFile shouldWarn >>= writeF fp destdir) srcfps
       writeIndex (destdir </> "index.html") destfps
 
-doFile :: String -> IO (Either String String)
-doFile f = do
+getShouldWarn :: [String] -> (Bool, [String])
+getShouldWarn args =
+  (null $ filter (== "--nowarn") args, filter (/= "--nowarn") args)
+
+doFile :: Bool -> String -> IO (Either String String)
+doFile shouldWarn f = do
   case T.parseFile f of
     Left err -> return . Left $ show err
     Right ts -> do
@@ -48,7 +53,7 @@ doFile f = do
 
         Right ast -> do
           let ws = W.check ast
-          when (not . null $ ws) $
+          when ((not . null) ws && shouldWarn) $
             putStrLn . groom $ ws
           return . Right . renderHtml . D.htmlDoc Resources.js Resources.css $ ast
 
