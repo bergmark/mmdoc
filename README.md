@@ -13,8 +13,6 @@ program. It is meant to run only on source files that `omc` accepts.
 
 ## Notable omissions
 
-* `matchcontinue` statements, they are not tail recursive
-
 * Loops, use recursion
 
 * Type variables in uniontypes and records of the form `uniontype U<A>`
@@ -22,8 +20,6 @@ program. It is meant to run only on source files that `omc` accepts.
   Use `replaceable type`s instead.
 
 * `model` and `class`, use functions only
-
-* `equation`, use `guard` or `if` statements/expressions
 
 * Statements and expressions are parsed, but only the bare minimum to
   proceed with the rest of the parsing so their representation may not
@@ -38,7 +34,3 @@ program. It is meant to run only on source files that `omc` accepts.
 * Better identification of documentation strings
 
 * `constant` definitions
-
-### Doc Generation
-
-* Generate HTML instead of just printing the AST.

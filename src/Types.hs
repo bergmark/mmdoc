@@ -95,6 +95,7 @@ data FunProt = FunProtVar VarDecl
 data Exp = EIf [(Exp,Exp)] Exp
          | EVar Name
          | Match [Var] [VarDecl] [Case] (Maybe MatchElse)
+         | Matchcontinue [Var] [VarDecl] [Case] (Maybe MatchElse)
          | Funcall Name [Exp]
          | InfixApp Op Exp Exp
          | UnaryApp Op Exp

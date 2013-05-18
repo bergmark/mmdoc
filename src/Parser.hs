@@ -291,6 +291,30 @@ p_exp t = do
                 tok' T.ParenR
                 return ts)
           p_matchvars t' = (:[]) <$> p_var t'
+    p_exp' T.Matchcontinue = do
+      mvars <- p_matchvars =<< eat
+      locals <- optionWith (return []) (== T.Local) (tok' T.Local >> p_vardecls)
+      cases <- many (== T.Case) p_match_case
+      els <- option (== T.Else) $ do
+        tok' T.Else
+        eqs <- p_equation
+        tokM' T.Then
+        e <- p_exp =<< eat
+        tok' T.Semi
+        return $ MatchElse eqs e
+      tok' T.End
+      tok' T.Matchcontinue
+      return $ Matchcontinue mvars locals cases els
+        where
+          p_matchvars :: TParser [Var]
+          p_matchvars T.ParenL = -- commaSep T.ParenR p_var =<< eat
+            ifM (lookIs T.ParenR)
+              (eat >> return [])
+              (do
+                ts <- commaSep T.ParenR p_var =<< eat
+                tok' T.ParenR
+                return ts)
+          p_matchvars t' = (:[]) <$> p_var t'
     p_exp' w@(T.W _) = do
       n <- p_name w
       s <- look

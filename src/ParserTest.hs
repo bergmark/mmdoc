@@ -45,8 +45,10 @@ parserExpected = [
                             ] Nothing
                           ]]
   , "MatchElseEquation" `tup` [func "f" [
-                                Assign "res" $ Match ["x"] [] [Case "_" [] "x"] (Just $ MatchElse ["y"] "z")
-                              ]]
+                                Assign "res" $ Match ["x"] [] [Case "_" [] "x"] (Just $ MatchElse ["y"] "z")]]
+  , "MatchContinue" `tup`
+                    [func "f" [
+                      Assign "x" (Matchcontinue ["y"] [] [Case "z" [] "w"] Nothing)]]
   , "UnionType" `tup` [pkg "P" [Union Nothing "U" Nothing []]]
   , "UnionTypeRecord" `tup` [Union Nothing "U" Nothing
                               [Record "R" [], Record "Tup" [("Integer","a"), ("String","b")]]
