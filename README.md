@@ -32,5 +32,3 @@ program. It is meant to run only on source files that `omc` accepts.
 * `match` guards
 
 * Better identification of documentation strings
-
-* `constant` definitions
