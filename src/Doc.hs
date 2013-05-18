@@ -64,6 +64,7 @@ astDoc (Package prot nam doc imports contents) = do
        dt "Dependencies"
        dd $ mapM_ astImportDoc imports
     dd ! class_ "contents" $ mapM_ astDoc contents
+astDoc PackageShort {} = return () -- TODO
 
 docFunc :: Bool -> Maybe Protection -> Name -> [Name] -> Maybe DocString -> [Param] -> Html
 docFunc isPartial prot nam qs doc ps = do
