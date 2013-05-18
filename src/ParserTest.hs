@@ -188,4 +188,8 @@ parserExpected = [
     , Assign (Tuple [Tuple ["x", "y"], "z"]) (Tuple [Tuple ["a", "b"], "c"])
     ]]
   , "ReservedPrefix" `tup` [ASTPartFn $ PartFn Nothing "F" [] Nothing [Input ("ordering", "ord")]]
+  , "PackageShort" `tup` [
+      PackageShort Nothing "P" "PKG" [Redeclare "K" "Integer", Redeclare "A" "String"]
+    , PackageShort Nothing "P" "PKG" [Redeclare "K" "Integer"]
+    ]
   ] where tup = (,)

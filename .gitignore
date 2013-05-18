@@ -4,3 +4,4 @@ dist
 *.html
 cabal-dev
 static/*.js
+src/Fay/*.js

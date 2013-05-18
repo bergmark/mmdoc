@@ -17,7 +17,7 @@ data-files:
   static/index.css
   static/jquery.js
 
-executable main
+executable mmdoc
   hs-source-dirs:    src
   ghc-options:       -Wall
   main-is:           Main.hs
@@ -32,7 +32,7 @@ executable main
                      split,
                      text
 
-executable test
+executable mmdoc-test
   hs-source-dirs:    src
   ghc-options:       -Wall
   main-is:           Test.hs

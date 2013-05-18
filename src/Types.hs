@@ -11,6 +11,7 @@ data AST = Comment String  -- //
          | Function (Maybe Protection) Name [Name] (Maybe DocString) [Param] [FunProt] [Stmt]
          | MComment String -- /* */
          | Package (Maybe Protection) Name (Maybe DocString) [Import] [AST]
+         | PackageShort (Maybe Protection) Name Name [Redeclare]
          | ASTPartFn PartFn
          | Replaceable Name
          | TypeAlias Name Type
@@ -18,6 +19,9 @@ data AST = Comment String  -- //
   deriving (Eq, Show)
 
 data Import = Import (Maybe Protection) Name (Maybe Name) (Either Wild [Var])
+  deriving (Eq, Show)
+
+data Redeclare = Redeclare Name Type
   deriving (Eq, Show)
 
 isAstStart :: T.Token -> Bool

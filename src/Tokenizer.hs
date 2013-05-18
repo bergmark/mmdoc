@@ -43,6 +43,7 @@ data Token = Algorithm
            | Public
            | Protected
            | Record
+           | Redeclare
            | Semi -- ;
            | Then
            | Type
@@ -113,6 +114,7 @@ p_token =
     <|> try (strSep "partial"      *> return Partial)
     <|> try (strSep "protected"    *> return Protected)
     <|> try (strSep "public"       *> return Public)
+    <|> try (strSep "redeclare"    *> return Redeclare)
     <|> try (strSep "record"       *> return Record)
     <|> try (strSep "then"         *> return Then)
     <|> try (strSep "type"         *> return Type)

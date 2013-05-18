@@ -109,14 +109,33 @@ p_ast _ = throwErr $ UnsupportedAstToken
 p_package :: TParser AST
 p_package T.Package = do
   name <- p_name =<< eat
-  doc <- p_docstr
-  imports <- p_imports
-  content <- p_top
-  tok' T.End
-  void $ p_name =<< eat
-  tok' T.Semi
-  return $ Package Nothing name doc imports content
+  ifM (lookIs $ T.S "=")
+    (do
+      tok' $ T.S "="
+      name2 <- p_name =<< eat
+      tok' $ T.ParenL
+      redeclares <- sepBy T.Comma T.ParenR p_redeclare =<< eat
+      tok' $ T.ParenR
+      tok' $ T.Semi
+      return $ PackageShort Nothing name name2 redeclares)
+    (do
+      doc <- p_docstr
+      imports <- p_imports
+      content <- p_top
+      tok' T.End
+      void $ p_name =<< eat
+      tok' T.Semi
+      return $ Package Nothing name doc imports content)
 p_package _ = throwErr $ ExpectedTok [T.Package]
+
+p_redeclare :: TParser Redeclare
+p_redeclare T.Redeclare = do
+  tok' T.Type
+  name <- p_name =<< eat
+  tok' $ T.S "="
+  typ <- p_type =<< eat
+  return $ Redeclare name typ
+p_redeclare _ = throwErr $ ExpectedTok [T.Type]
 
 p_imports :: Parse [Import]
 p_imports = lookN 2 >>= \l -> case l of
